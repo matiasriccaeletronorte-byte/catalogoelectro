@@ -82,3 +82,14 @@ header.header-dark .cart b{background:#fff;color:#E52627}
 .product-information{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:26px;margin-top:42px;padding-top:36px;border-top:1px solid #e1e3e6}.product-information>div{padding:25px;border-radius:16px;background:#f8f9fa}.product-information h2{margin:0 0 16px;color:#181b20;font-size:1.3rem}.product-information p{margin:0;color:#59616c;line-height:1.65}.product-information p+p{margin-top:14px}.product-information ul{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0;padding:0;list-style:none}.product-information li{padding:11px 13px;border-radius:8px;background:#fff;color:#343a42;font-size:.92rem}
 @media(max-width:800px){.product-page{padding:22px 16px 50px}.product-detail-layout,.product-information{grid-template-columns:1fr;gap:20px}.product-main-image{min-height:330px}.product-buy-box{padding:24px}.product-information{margin-top:28px;padding-top:28px}.product-information ul{grid-template-columns:1fr}.offers-head{align-items:flex-start}.offer-countdown{margin:0;flex-wrap:wrap}}
 @media(prefers-reduced-motion:reduce){.carousel-enter,.product-added,.added-button{animation:none}}
+
+.price-block{display:grid;gap:4px;margin:8px 0 14px}
+.price-cash{font-size:22px;letter-spacing:-.5px;color:var(--text)}
+.price-cash small{font-size:12px;font-weight:700;color:var(--muted)}
+.price-list{font-size:13px;color:var(--muted)}
+.price-promo{display:inline-block;font-size:12px;font-weight:800;color:var(--brand);background:var(--brand-soft);border-radius:var(--radius-sm);padding:4px 8px;width:fit-content}
+.price-next{font-size:12px;color:var(--muted)}
+.whatsapp-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#1fa855;color:#fff;font-weight:800;text-decoration:none;border-radius:var(--radius-md);padding:10px 14px;font-size:14px}
+.whatsapp-button.small{padding:8px 10px;font-size:12px}
+.whatsapp-button.large{padding:14px 18px;font-size:16px;width:100%}
+.whatsapp-button:hover{background:#188f48}

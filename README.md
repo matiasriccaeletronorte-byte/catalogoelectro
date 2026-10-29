@@ -13,7 +13,7 @@ Variables: `MONGODB_URI` (base `catalogo_electronorte`), `ADMIN_PASSWORD`, `UPLO
 
 ## Panel de administración
 
-- **Productos:** alta, edición y desactivación de a uno. Las imágenes se suben desde la ficha del artículo (JPG, PNG o WebP, hasta 5 MB).
+- **Productos:** alta, edición y desactivación de a uno. Las imágenes se suben desde la ficha del artículo (JPG, PNG o WebP, hasta 4 MB; se achican a WebP de 1200 px).
 - **Importar / Exportar:** carga y modificación masiva desde Excel (.xlsx) o CSV, con vista previa antes de aplicar.
 - **WhatsApp y promos:** número de WhatsApp, plantilla del mensaje (`{nombre}`, `{sku}`, `{link}`) y fechas de 6 cuotas con BBVA.
 - **Home** y **Categorías:** igual que en el proyecto original.
@@ -36,6 +36,10 @@ Se calculan por día (hora de Argentina): miércoles y sábados 3 cuotas sin int
 ## Tienda online apagada
 
 Carrito, checkout, pedidos, login de clientes y Contabilium están en `src/_disabled/` (fuera de las rutas y del typecheck). Para reactivarlos hay que moverlos de vuelta a `src/app`, `src/components`, `src/models` y `src/lib`, y adaptarlos al nuevo modelo de producto (`cashPrice` y `listPrice` en lugar de `price`).
+
+## Publicar
+
+Ver `DEPLOY.md` (Vercel + MongoDB Atlas + Supabase Storage).
 
 ## Verificación
 

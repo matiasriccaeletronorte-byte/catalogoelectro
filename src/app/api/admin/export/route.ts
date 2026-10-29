@@ -9,6 +9,8 @@ const COLUMNS = [
   ["Características", "features"], ["Outlet", "outlet"], ["Activo", "active"]
 ] as const;
 
+export const maxDuration = 60;
+
 export async function GET(request: Request) {
   if (!(await isAdmin(request))) return unauthorized();
   await connectDb();

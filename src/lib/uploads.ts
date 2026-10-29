@@ -1,6 +1,7 @@
 import path from "path";
 
-export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+// Vercel rechaza pedidos de más de ~4,5 MB, así que el tope va por debajo.
+export const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
 const EXT: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 
 export const extensionFor = (mime: string): string | null => EXT[mime] ?? null;

@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import { shrinkImage } from "@/lib/client-image";
 import { normalizeImageUrl } from "@/lib/image-url";
 import type { Product } from "@/lib/types";
 
@@ -73,7 +74,7 @@ export function ProductsTab({ categories }: { categories: string[] }) {
   async function upload(file: File | undefined) {
     if (!file || !editing) return;
     const body = new FormData();
-    body.set("file", file);
+    body.set("file", await shrinkImage(file));
     const response = await fetch(`/api/admin/products/${editing}/images`, { method: "POST", body });
     const result = await response.json().catch(() => ({}));
     if (!response.ok) return setMessage(result.error ?? "No se pudo subir la imagen.");

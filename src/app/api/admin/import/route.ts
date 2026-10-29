@@ -5,13 +5,15 @@ import { ImportConflictError } from "@/lib/import/apply";
 import { runImport } from "@/lib/import/run";
 import { readImportFile } from "@/lib/import/read-file";
 
+export const maxDuration = 60;
+
 export async function POST(request: Request) {
   if (!(await isAdmin(request))) return unauthorized();
   const form = await request.formData();
   const file = form.get("file");
   const mode = form.get("mode") === "apply" ? "apply" : "preview";
   if (!(file instanceof File)) return NextResponse.json({ error: "Falta el archivo" }, { status: 400 });
-  if (file.size > 10 * 1024 * 1024) return NextResponse.json({ error: "El archivo supera los 10 MB." }, { status: 400 });
+  if (file.size > 4 * 1024 * 1024) return NextResponse.json({ error: "El archivo supera los 4 MB. Dividilo en partes." }, { status: 400 });
   let parsed;
   try {
     parsed = await readImportFile(Buffer.from(await file.arrayBuffer()), file.name);

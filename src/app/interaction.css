@@ -93,3 +93,27 @@ header.header-dark .cart b{background:#fff;color:#E52627}
 .whatsapp-button.small{padding:8px 10px;font-size:12px}
 .whatsapp-button.large{padding:14px 18px;font-size:16px;width:100%}
 .whatsapp-button:hover{background:#188f48}
+
+.catalog-page{align-items:start}
+.filters-panel .facet-sub{padding-left:22px;font-size:13px}
+.filters-panel .facet-back{color:var(--brand);font-weight:800;font-size:13px}
+.facet-check{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:14px;cursor:pointer}
+.facet-check span,.filters-panel button span{margin-left:auto;color:var(--muted);font-size:12px}
+.facet-price{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.facet-price input{width:100%;padding:8px;border:1px solid var(--line);border-radius:var(--radius-sm)}
+.facet-price button{grid-column:1/-1;padding:8px;border:0;border-radius:var(--radius-sm);background:var(--brand);color:#fff;font-weight:800;cursor:pointer}
+.filter-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.filter-chips button{padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:var(--surface);cursor:pointer;font-size:13px}
+.filter-chips .chips-clear{border-color:transparent;color:var(--brand);font-weight:800;background:none}
+.catalog-sort{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.catalog-sort select{padding:8px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface)}
+.product-grid.is-loading{opacity:.55;transition:opacity .15s}
+.catalog-mobile-bar,.filters-close{display:none}
+@media (max-width:860px){
+  .catalog-page{grid-template-columns:1fr}
+  .catalog-mobile-bar{display:block;margin-bottom:12px}
+  .catalog-mobile-bar button{padding:10px 14px;border:1px solid var(--line);border-radius:var(--radius-md);background:var(--surface);font-weight:800}
+  .filters-panel{display:none;position:fixed;inset:0;z-index:50;overflow:auto;background:var(--surface);padding:20px}
+  .filters-panel.open{display:block}
+  .filters-close{display:block;margin-left:auto}
+}

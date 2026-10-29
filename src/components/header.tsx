@@ -2,18 +2,13 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useCart } from "./cart-provider";
 import { FormEvent, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
-type Customer = { id: string; name: string; email: string; picture: string };
-
 export function Header() {
-  const { quantity } = useCart();
   const router = useRouter();
   const pathname = usePathname();
   const [darkHeader, setDarkHeader] = useState(false);
-  const [customer, setCustomer] = useState<Customer | null>(null);
   const [search, setSearch] = useState("");
   const isAdmin = pathname.startsWith("/admin");
 
@@ -29,16 +24,10 @@ export function Header() {
     setSearch(params.get("q") ?? "");
   }, []);
 
-  useEffect(() => {
-    fetch("/api/auth/customer/me")
-      .then((r) => r.json())
-      .then((data) => setCustomer(data.authenticated ? data.customer : null));
-  }, []);
-
   const submitSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const value = search.trim();
-    router.push(value ? `/?q=${encodeURIComponent(value)}#catalogo` : "/#catalogo");
+    router.push(value ? `/catalogo?q=${encodeURIComponent(value)}` : "/catalogo");
   };
 
   return (
@@ -78,11 +67,8 @@ export function Header() {
           </form>
 
           <nav>
-            <Link href="/#catalogo">Productos</Link>
-            {customer ? <Link href="/account">Mi cuenta</Link> : <Link href="/api/auth/customer/google/start?returnTo=/account">Ingresar</Link>}
-            <Link href="/checkout" className="cart">
-              Carrito <b>{quantity}</b>
-            </Link>
+            <Link href="/catalogo">Productos</Link>
+            <Link href="/promos-bancarias">Promos bancarias</Link>
           </nav>
         </>
       )}

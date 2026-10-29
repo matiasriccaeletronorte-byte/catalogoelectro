@@ -27,7 +27,7 @@ export default function BankPromotionsPage() {
           <p className="eyebrow">Tarjetas adheridas</p>
           <h2>Consultá beneficios y cuotas según el banco o tarjeta.</h2>
         </div>
-        <Link href="/#catalogo" className="primary-link">
+        <Link href="/catalogo" className="primary-link">
           Volver al catálogo
         </Link>
       </div>

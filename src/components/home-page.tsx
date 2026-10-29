@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ProductCard } from "@/components/product-card";
 import { Product } from "@/lib/types";
 import { normalizeImageUrl } from "@/lib/image-url";
@@ -53,13 +54,10 @@ const branchLocations = [
   }
 ];
 
-export function HomePage({ initialQuery }: { initialQuery: string }) {
-  const [products, setProducts] = useState<Product[]>([]);
+export function HomePage() {
+  const router = useRouter();
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>(["Todos"]);
-  const [catalogTotal, setCatalogTotal] = useState(0);
-  const [catalogPage, setCatalogPage] = useState(1);
-  const [catalogLoading, setCatalogLoading] = useState(true);
   const [homepage, setHomepage] = useState<HomepageSettings>({
     bestSellerIds: [],
     offerIds: [],
@@ -69,14 +67,10 @@ export function HomePage({ initialQuery }: { initialQuery: string }) {
     bankPromotions: []
   });
   const [error, setError] = useState("");
-  const [category, setCategory] = useState("Todos");
   const [slide, setSlide] = useState(0);
   const [heroImage, setHeroImage] = useState(0);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(() => Date.now());
-
-  const query = initialQuery;
-  const normalizedQuery = query.trim().toLowerCase();
 
   useEffect(() => {
     fetch("/api/homepage")
@@ -97,22 +91,17 @@ export function HomePage({ initialQuery }: { initialQuery: string }) {
   }, []);
 
   useEffect(() => {
-    setCatalogLoading(true);
-    const params = new URLSearchParams({ page: String(catalogPage), pageSize: "24" });
-    if (category !== "Todos") params.set("category", category);
-    if (normalizedQuery) params.set("q", normalizedQuery);
-    fetch(`/api/products?${params}`)
-      .then((res) => res.ok ? res.json() : Promise.reject())
-      .then((data) => { setProducts(data.items ?? []); setCategories(["Todos", ...(data.categories ?? [])]); setCatalogTotal(data.total ?? 0); })
-      .catch(() => setError("No se pudo cargar el catálogo. Verificá la conexión a la base de datos."))
-      .finally(() => setCatalogLoading(false));
-  }, [category, normalizedQuery, catalogPage]);
+    fetch("/api/products")
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((data) => setCategories(["Todos", ...(data.facets?.categories ?? []).map((c: { value: string }) => c.value)]))
+      .catch(() => setError("No se pudo cargar el catálogo. Verificá la conexión a la base de datos."));
+  }, []);
 
   const carouselSlides = homepage.carouselSlides.length > 0 ? homepage.carouselSlides : defaultSlides;
   const categoriesMenu = useMemo(() => categories.filter((item) => item !== "Todos"), [categories]);
   const menuCategories = categoriesMenu.length > 0 ? categoriesMenu : ["Electrodomésticos", "Tecnología", "Hogar"];
 
-  const indexedProducts = useMemo(() => new Map([...featuredProducts, ...products].map((product) => [product.id, product])), [featuredProducts, products]);
+  const indexedProducts = useMemo(() => new Map(featuredProducts.map((product) => [product.id, product])), [featuredProducts]);
   const resolveProducts = (ids: string[], fallback: Product[]) => {
     const selected = ids.map((id) => indexedProducts.get(id)).filter((item): item is Product => Boolean(item));
     return selected.length > 0 ? selected : fallback;
@@ -150,10 +139,8 @@ export function HomePage({ initialQuery }: { initialQuery: string }) {
   const offerTimers = useMemo(() => new Map(homepage.offerTimers.map((timer) => [timer.productId, timer.endsAt])), [homepage.offerTimers]);
 
   const goToCatalog = (selectedCategory: string) => {
-    setCategory(selectedCategory);
-    setCatalogPage(1);
     setOpenMenu(null);
-    requestAnimationFrame(() => document.getElementById("catalogo")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    router.push(selectedCategory === "Todos" ? "/catalogo" : `/catalogo?category=${encodeURIComponent(selectedCategory)}`);
   };
 
   return (
@@ -296,7 +283,7 @@ export function HomePage({ initialQuery }: { initialQuery: string }) {
             <p>Ofertas</p>
             <h2>Destacados de la semana</h2>
           </div>
-          <Link href="#catalogo" className="catalog-reset">
+          <Link href="/catalogo" className="catalog-reset">
             Ver todo el catálogo
           </Link>
         </div>
@@ -307,72 +294,14 @@ export function HomePage({ initialQuery }: { initialQuery: string }) {
         </div>
       </section>
 
-      <section id="catalogo" className="catalog">
-        <aside className="categories">
-          <p>Categorías</p>
-          <h2>Encontrá rápido</h2>
-          {categories.map((item) => (
-            <button
-              className={category === item ? "selected" : ""}
-              onClick={() => goToCatalog(item)}
-              key={item}
-            >
-              {item}
-              <span>→</span>
-            </button>
-          ))}
-        </aside>
-
-        <div className="catalog-content">
-          <div className="catalog-toolbar">
-            <div className="section-head">
-              <p>Catálogo</p>
-              <h2>{category === "Todos" ? "Productos destacados" : category}</h2>
-              <div className="catalog-summary">
-                {query ? (
-                  <span>
-                    Resultados para <strong>“{query}”</strong>
-                  </span>
-                ) : (
-                  <span>
-                    {catalogTotal} producto{catalogTotal === 1 ? "" : "s"} encontrados
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {query ? (
-              <a className="catalog-reset" href="/#catalogo">
-                Limpiar búsqueda
-              </a>
-            ) : null}
-          </div>
-
-          <div className="filters" aria-label="Filtro por categorías">
-            {categories.map((item) => (
-              <button className={category === item ? "selected" : ""} onClick={() => goToCatalog(item)} key={item}>
-                {item}
-              </button>
-            ))}
-          </div>
-
-          {error ? (
-            <p className="error">{error}</p>
-          ) : catalogLoading ? (
-            <p>Cargando catálogo…</p>
-          ) : products.length === 0 ? (
-            <div className="empty-state">
-              No encontramos productos con esos filtros. Probá otra categoría o limpiá la búsqueda.
-            </div>
-          ) : (
-            <div className="product-grid">
-              {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          )}
-          {catalogTotal > 24 ? <div className="catalog-pagination"><button type="button" disabled={catalogPage === 1} onClick={() => setCatalogPage((page) => Math.max(1, page - 1))}>Anterior</button><span>Página {catalogPage} de {Math.ceil(catalogTotal / 24)}</span><button type="button" disabled={catalogPage >= Math.ceil(catalogTotal / 24)} onClick={() => setCatalogPage((page) => page + 1)}>Siguiente</button></div> : null}
+      <section className="offers">
+        <div className="section-head">
+          <p>Catálogo</p>
+          <h2>Explorá todos los productos</h2>
         </div>
+        <Link href="/catalogo" className="primary-link">
+          Ver catálogo completo
+        </Link>
       </section>
 
       <section id="sucursales" className="locations">
@@ -414,7 +343,7 @@ export function HomePage({ initialQuery }: { initialQuery: string }) {
             <Link href="https://wa.me/541154560043" target="_blank" rel="noreferrer" className="primary-link">
               Hablar por WhatsApp
             </Link>
-            <Link href="#catalogo" className="secondary-link">
+            <Link href="/catalogo" className="secondary-link">
               Ver productos
             </Link>
           </div>

@@ -1,29 +1,46 @@
-# Electronorte Outlet
+# Catálogo Electronorte
 
-E-commerce con catálogo, carrito persistente, pedidos para aprobación manual, administración de productos y sincronización opcional con Contabilium. Está construido con **Next.js + React** y **MongoDB + Mongoose**.
+Catálogo virtual con consultas por WhatsApp. Cada artículo muestra precio en efectivo y de contado, las cuotas vigentes del día y un botón que abre WhatsApp con el mensaje armado. Construido con **Next.js + React** y **MongoDB + Mongoose**.
 
-## Primeros pasos
+## Levantarlo (Linux)
 
-1. Instalá Node.js LTS y Docker Desktop.
-2. Creá `.env.local` con `MONGODB_URI`, las variables de administrador y las credenciales de Google si vas a usar inicio de sesión.
-3. Iniciá MongoDB: `docker compose up -d mongo`.
-4. Instalá dependencias: `npm.cmd install`.
-5. Iniciá el sitio: `npm.cmd run dev` y abrí `http://localhost:3000`.
+1. MongoDB: `docker start electronorte-mongo` (o `docker run -d --name electronorte-mongo -p 27017:27017 mongo:8`).
+2. Copiá `.env.example` a `.env.local` y definí `ADMIN_PASSWORD`.
+3. `npm install`
+4. `npm run dev` y abrí http://localhost:3000. El panel está en `/admin`.
 
-La primera visita a `/api/products` carga cuatro productos de ejemplo cuando la base está vacía. Modificá o eliminá `src/lib/seed.ts` antes de usar una base de producción vacía.
+Variables: `MONGODB_URI` (base `catalogo_electronorte`), `ADMIN_PASSWORD`, `UPLOAD_DIR` (carpeta de imágenes subidas, `./uploads` por defecto).
 
-## Flujo de pedidos
+## Panel de administración
 
-Cliente → catálogo → carrito → datos → `POST /api/orders` → estado `pending_review`.
+- **Productos:** alta, edición y desactivación de a uno. Las imágenes se suben desde la ficha del artículo (JPG, PNG o WebP, hasta 5 MB).
+- **Importar / Exportar:** carga y modificación masiva desde Excel (.xlsx) o CSV, con vista previa antes de aplicar.
+- **WhatsApp y promos:** número de WhatsApp, plantilla del mensaje (`{nombre}`, `{sku}`, `{link}`) y fechas de 6 cuotas con BBVA.
+- **Home** y **Categorías:** igual que en el proyecto original.
 
-El administrador revisa stock, condición y envío; luego cambia el pedido a `approved` y comparte el medio de pago. No se procesan pagos automáticos en esta versión.
+### Formato del archivo de importación
 
-El descuento local de stock se controla con `INVENTORY_DEDUCTION_ENABLED` en `.env.local`. Por defecto se deja en `false`.
+Primera fila con encabezados (no importan mayúsculas ni tildes): `SKU`, `Nombre`, `Descripción`, `Categoría`, `Subcategoría`, `Marca`, `Precio efectivo`, `Precio contado`, `Disponible`, `Características` (separadas por `|`), `Outlet`, `Activo`.
 
-## Validación
+- El **SKU** es la clave: si existe se actualiza, si no se crea. Un artículo nuevo necesita Nombre, Categoría y los dos precios.
+- Una **celda vacía no borra** el dato existente, y una **columna ausente no se toca**.
+- Sí/no se escribe `sí`/`no`, `1`/`0` o `true`/`false`. Los precios aceptan `1234`, `1.234,50` o `$ 1.234`.
+- Un SKU repetido dentro del archivo se informa como error en la segunda fila.
+- Las imágenes no se importan: se cargan desde cada artículo.
+- "Descargar catálogo actual" exporta con las mismas columnas, para editar en Excel y volver a subir.
 
-Antes de publicar cambios ejecutá:
+## Cuotas
 
-```powershell
-npm.cmd run typecheck
+Se calculan por día (hora de Argentina): miércoles y sábados 3 cuotas sin interés; miércoles además 6 cuotas con Hipotecario; el día cargado en el panel, 6 cuotas con BBVA. La cuota es el precio de contado dividido por la cantidad de cuotas.
+
+## Tienda online apagada
+
+Carrito, checkout, pedidos, login de clientes y Contabilium están en `src/_disabled/` (fuera de las rutas y del typecheck). Para reactivarlos hay que moverlos de vuelta a `src/app`, `src/components`, `src/models` y `src/lib`, y adaptarlos al nuevo modelo de producto (`cashPrice` y `listPrice` en lugar de `price`).
+
+## Verificación
+
+```bash
+npm run typecheck
+npm test
+npm run build
 ```

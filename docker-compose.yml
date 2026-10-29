@@ -5,9 +5,11 @@ services:
       - "3000:3000"
     env_file: .env.local
     environment:
-      MONGODB_URI: mongodb://mongo:27017/electronorte
+      MONGODB_URI: mongodb://mongo:27017/catalogo_electronorte
     depends_on:
       - mongo
+    volumes:
+      - uploads_data:/data/uploads
     restart: unless-stopped
   mongo:
     image: mongo:8
@@ -18,3 +20,4 @@ services:
     restart: unless-stopped
 volumes:
   mongo_data:
+  uploads_data:

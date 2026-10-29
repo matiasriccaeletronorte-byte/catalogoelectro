@@ -20,6 +20,8 @@ RUN addgroup -S app && adduser -S app -G app
 COPY --from=builder --chown=app:app /app/public ./public
 COPY --from=builder --chown=app:app /app/.next/standalone ./
 COPY --from=builder --chown=app:app /app/.next/static ./.next/static
+RUN mkdir -p /data/uploads && chown app:app /data/uploads
+ENV UPLOAD_DIR=/data/uploads
 USER app
 EXPOSE 3000
 CMD ["node", "server.js"]

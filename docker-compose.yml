@@ -1,0 +1,20 @@
+services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    env_file: .env.local
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/electronorte
+    depends_on:
+      - mongo
+    restart: unless-stopped
+  mongo:
+    image: mongo:8
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+volumes:
+  mongo_data:

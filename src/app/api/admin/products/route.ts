@@ -1,60 +1,37 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
 import { isAdmin, unauthorized } from "@/lib/admin-auth";
+import { buildMatch, parseFilters } from "@/lib/catalog-filters";
+import { toPublicProduct } from "@/lib/catalog-query";
 import { connectDb } from "@/lib/db";
+import { productInputSchema, withSearchText } from "@/lib/product-schema";
 import { ProductModel } from "@/models/Product";
-import { normalizeImageUrl } from "@/lib/image-url";
 
-const schema = z.object({
-  sku: z.string().trim().min(1).optional().or(z.literal("")),
-  name: z.string().min(2),
-  description: z.string().min(2),
-  price: z.coerce.number().min(0),
-  stock: z.coerce.number().int().min(0),
-  category: z.string().min(2),
-  subCategory: z.string().trim().optional().or(z.literal("")).default(""),
-  brand: z.string().trim().optional().or(z.literal("")).default(""),
-  features: z.array(z.string().trim().min(1).max(50)).max(8).default([]),
-  outlet: z.boolean().default(false),
-  image: z.string().default(""),
-  images: z.array(z.string().trim().min(1)).default([])
-});
-
-function normalizeImages(images: string[], image: string) {
-  const cleaned = images.map((item) => item.trim()).filter(Boolean);
-  if (cleaned.length > 0) return cleaned;
-  const fallback = image.trim();
-  return fallback ? [fallback] : [];
-}
+const ADMIN_PAGE_SIZE = 25;
 
 export async function GET(request: Request) {
   if (!(await isAdmin(request))) return unauthorized();
   await connectDb();
   const { searchParams } = new URL(request.url);
-  const query = searchParams.get("q")?.trim() ?? "";
-  const requestedLimit = Number(searchParams.get("limit") ?? "0");
-  const limit = Number.isFinite(requestedLimit) && requestedLimit > 0 ? Math.min(Math.floor(requestedLimit), 30) : 0;
-  const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const filter = query
-    ? { active: { $ne: false }, $or: [{ name: { $regex: escapedQuery, $options: "i" } }, { sku: { $regex: escapedQuery, $options: "i" } }, { brand: { $regex: escapedQuery, $options: "i" } }] }
-    : { active: { $ne: false } };
-  const productQuery = ProductModel.find(filter).sort({ createdAt: -1 });
-  if (limit) productQuery.limit(limit);
-  const products = await productQuery.lean();
-  return NextResponse.json(products.map(({ _id, ...product }) => ({ ...product, id: String(_id) })));
+  const filters = parseFilters(searchParams);
+  const match = buildMatch({ ...filters, category: "", subCategory: "", brands: [], minPrice: undefined, maxPrice: undefined, availableOnly: false });
+  const limit = Math.min(30, Math.max(1, Number(searchParams.get("limit")) || ADMIN_PAGE_SIZE));
+  const [rows, total] = await Promise.all([
+    ProductModel.find(match).sort({ createdAt: -1, _id: 1 }).skip((filters.page - 1) * limit).limit(limit).lean(),
+    ProductModel.countDocuments(match)
+  ]);
+  return NextResponse.json({ items: rows.map((r) => toPublicProduct(r as unknown as Record<string, unknown>)), total, page: filters.page, pageSize: limit });
 }
 
 export async function POST(request: Request) {
   if (!(await isAdmin(request))) return unauthorized();
-  const data = schema.safeParse(await request.json());
-  if (!data.success) return NextResponse.json({ error: "Datos de producto inválidos" }, { status: 400 });
+  const data = productInputSchema.safeParse(await request.json());
+  if (!data.success) return NextResponse.json({ error: data.error.issues[0]?.message ?? "Datos de producto inválidos" }, { status: 400 });
   await connectDb();
-  const payload = {
-    ...data.data,
-    sku: data.data.sku?.trim() || undefined,
-    image: normalizeImageUrl(data.data.image),
-    images: normalizeImages(data.data.images.map((image) => normalizeImageUrl(image)), normalizeImageUrl(data.data.image))
-  };
-  const product = await ProductModel.create(payload);
-  return NextResponse.json({ ...payload, id: String(product._id) }, { status: 201 });
+  try {
+    const product = await ProductModel.create(withSearchText(data.data));
+    return NextResponse.json({ id: String(product._id) }, { status: 201 });
+  } catch (error) {
+    if ((error as { code?: number }).code === 11000) return NextResponse.json({ error: "Ya existe un artículo con ese SKU" }, { status: 409 });
+    throw error;
+  }
 }

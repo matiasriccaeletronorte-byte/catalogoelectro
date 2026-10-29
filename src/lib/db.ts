@@ -12,7 +12,11 @@ export async function connectDb() {
   const uri = process.env.MONGODB_URI;
   if (!uri) throw new Error("Falta MONGODB_URI. Copiá .env.example a .env.local.");
   if (cache.connection) return cache.connection;
-  if (!cache.promise) cache.promise = mongoose.connect(uri);
+  if (!cache.promise) {
+    // Falla rápido (8 s) para no agotar el tiempo de la función en Vercel, y no recuerda un intento fallido.
+    cache.promise = mongoose.connect(uri, { serverSelectionTimeoutMS: Number(process.env.MONGODB_TIMEOUT_MS) || 8000, maxPoolSize: 5 });
+    cache.promise.catch(() => { cache.promise = null; });
+  }
   cache.connection = await cache.promise;
   return cache.connection;
 }

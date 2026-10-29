@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import type { HomeShelves } from "@/lib/home-shelves";
+import { ProductShelf } from "./product-shelf";
 import { useSiteSettings } from "./site-settings-provider";
 import { ProductCard } from "@/components/product-card";
 import { Product } from "@/lib/types";
@@ -39,7 +41,7 @@ const defaultSlides = [
 ];
 
 
-export function HomePage() {
+export function HomePage({ shelves }: { shelves: HomeShelves }) {
   const { branches } = useSiteSettings();
   const router = useRouter();
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
@@ -207,6 +209,11 @@ export function HomePage() {
         </div>
       </section>
 
+      <ProductShelf eyebrow="Outlet" title="Oportunidades outlet" href="/catalogo" items={shelves.outlet} />
+      {shelves.categories.map((shelf) => (
+        <ProductShelf key={shelf.name} eyebrow={`${shelf.total} producto${shelf.total === 1 ? "" : "s"}`} title={shelf.name} href={`/catalogo?category=${encodeURIComponent(shelf.name)}`} items={shelf.items} />
+      ))}
+
       <section className="hero">
         <div className="hero-copy hero-copy-balanced">
           <div className="hero-copy-content">
@@ -249,7 +256,7 @@ export function HomePage() {
         </div>
       </section>
 
-      <section id="mas-vendidos" className="offers">
+      {bestSellers.length > 0 ? <section id="mas-vendidos" className="offers">
         <div className="section-head offers-head">
           <div>
             <p>Más vendidos</p>
@@ -261,9 +268,9 @@ export function HomePage() {
             <ProductCard key={`best-${product.id}`} product={product} />
           ))}
         </div>
-      </section>
+      </section> : null}
 
-      <section id="ofertas" className="offers">
+      {offers.length > 0 ? <section id="ofertas" className="offers">
         <div className="section-head offers-head">
           <div>
             <p>Ofertas</p>
@@ -278,7 +285,7 @@ export function HomePage() {
             <ProductCard key={`offer-${product.id}`} product={product} offerEndsAt={offerTimers.get(product.id)} currentTime={currentTime} />
           ))}
         </div>
-      </section>
+      </section> : null}
 
       <section className="offers">
         <div className="section-head">

@@ -1,17 +1,16 @@
 export type Product = {
   id: string;
+  sku?: string;
   name: string;
   description: string;
-  price: number;
-  stock: number;
+  cashPrice: number;
+  listPrice: number;
+  available: boolean;
   category: string;
   subCategory?: string;
   brand?: string;
-  sku?: string;
   features?: string[];
   outlet: boolean;
   image: string;
   images?: string[];
 };
-
-export type CartItem = Product & { quantity: number };

@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "./interaction.css";
 import "./admin.css";
-import "./account.css";
-import { CartProvider } from "@/components/cart-provider";
 import { Header } from "@/components/header";
 
 export const metadata: Metadata = {
@@ -15,8 +13,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="es">
       <body>
-        <CartProvider>
-          <Header />
+                  <Header />
           {children}
           <a
             className="whatsapp-fab"
@@ -32,9 +29,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               />
             </svg>
           </a>
-          <footer>Electronorte Outlet · Comprá con asesoramiento personalizado</footer>
-        </CartProvider>
-      </body>
+          <footer>Electronorte · Consultanos por WhatsApp</footer>
+              </body>
     </html>
   );
 }

@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { normalizeImageUrl } from "@/lib/image-url";
 import type { Product } from "@/lib/types";
 import { ProductsTab } from "./admin/products-tab";
+import { ImportTab } from "./admin/import-tab";
 import { SettingsTab } from "./admin/settings-tab";
 
 
@@ -16,7 +17,7 @@ type HomepageSettings = {
   bankPromotions: { title: string; description: string; note: string }[];
 };
 
-type Tab = "products" | "settings" | "home" | "categories";
+type Tab = "products" | "import" | "settings" | "home" | "categories";
 type FeaturedKey = "bestSellerIds" | "offerIds";
 
 const emptySlide = { tag: "", title: "", text: "", image: "" };
@@ -216,9 +217,9 @@ export function AdminPanel() {
     <main className="admin admin-layout">
       <aside className="admin-nav">
         <b>VENTAS</b>
-        {(["products", "settings", "home", "categories"] as Tab[]).map((item) => (
+        {(["products", "import", "settings", "home", "categories"] as Tab[]).map((item) => (
           <button onClick={() => setTab(item)} className={tab === item ? "selected" : ""} key={item}>
-            {({ products: "Productos", settings: "WhatsApp y promos", home: "Home", categories: "Categorías" })[item]}
+            {({ products: "Productos", import: "Importar / Exportar", settings: "WhatsApp y promos", home: "Home", categories: "Categorías" })[item]}
           </button>
         ))}
         <button
@@ -315,6 +316,7 @@ export function AdminPanel() {
         )}
 
         {tab === "products" && <ProductsTab categories={categories} />}
+        {tab === "import" && <ImportTab />}
         {tab === "settings" && <SettingsTab />}
 
         {tab === "categories" && (

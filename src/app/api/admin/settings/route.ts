@@ -5,10 +5,19 @@ import { connectDb } from "@/lib/db";
 import { getSiteSettings } from "@/lib/site-settings";
 import { SiteSettingsModel } from "@/models/SiteSettings";
 
+const branchSchema = z.object({
+  name: z.string().trim().min(1).max(80),
+  city: z.string().trim().max(80),
+  phone: z.string().trim().max(30),
+  whatsapp: z.string().trim().max(30),
+  query: z.string().trim().max(160)
+});
+
 const schema = z.object({
   whatsappPhone: z.string().trim().max(30),
   whatsappTemplate: z.string().trim().max(500),
-  bbvaDates: z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).max(60)
+  bbvaDates: z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).max(60),
+  branches: z.array(branchSchema).max(6)
 });
 
 export async function GET(request: Request) {

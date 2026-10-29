@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSiteSettings } from "./site-settings-provider";
 import { ProductCard } from "@/components/product-card";
 import { Product } from "@/lib/types";
 import { normalizeImageUrl } from "@/lib/image-url";
@@ -37,24 +38,9 @@ const defaultSlides = [
   }
 ];
 
-const branchLocations = [
-  {
-    name: "Rivadavia 1743",
-    city: "Los Polvorines, Buenos Aires",
-    phone: "011 2174-3430",
-    whatsapp: "5491121743430",
-    query: "Rivadavia 1743 Los Polvorines Buenos Aires"
-  },
-  {
-    name: "Av. Sesquicentenario 1106",
-    city: "Los Polvorines, Buenos Aires",
-    phone: "011 5456-0043",
-    whatsapp: "5491154560043",
-    query: "Av. Sesquicentenario 1106 Los Polvorines Buenos Aires"
-  }
-];
 
 export function HomePage() {
+  const { branches } = useSiteSettings();
   const router = useRouter();
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>(["Todos"]);
@@ -305,13 +291,13 @@ export function HomePage() {
       </section>
 
       <section id="sucursales" className="locations">
-        {branchLocations.map((branch) => (
-          <article className="location-card" key={branch.name}>
+        {branches.map((branch, index) => (
+          <article className="location-card" key={`${branch.name}-${index}`}>
             <p className="eyebrow">Sucursal</p>
             <h2>{branch.name}</h2>
             <div className="location-contact">
               <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(branch.query)}`}
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(branch.query || `${branch.name} ${branch.city}`)}`}
                 target="_blank"
                 rel="noreferrer"
                 className="location-link"
@@ -325,7 +311,7 @@ export function HomePage() {
             <div className="location-map">
               <iframe
                 title={branch.name}
-                src={`https://www.google.com/maps?q=${encodeURIComponent(branch.query)}&output=embed`}
+                src={`https://www.google.com/maps?q=${encodeURIComponent(branch.query || `${branch.name} ${branch.city}`)}&output=embed`}
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
               />

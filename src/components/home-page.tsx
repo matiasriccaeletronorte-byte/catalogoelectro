@@ -19,20 +19,20 @@ type HomepageSettings = {
 const defaultSlides = [
   {
     tag: "OFERTAS SEMANALES",
-    title: "Promociones con stock real y salida rápida.",
-    text: "Un bloque limpio para destacar campañas sin cargar la home de elementos innecesarios.",
+    title: "Cuotas sin interés los miércoles y sábados.",
+    text: "Consultá por WhatsApp las promociones vigentes y el precio en efectivo.",
     image: ""
   },
   {
     tag: "ELECTROHOGAR",
-    title: "Heladeras, lavarropas y cocinas con foco comercial.",
-    text: "Una estructura de tienda real, con acceso rápido a categorías y secciones importantes.",
+    title: "Heladeras, lavarropas y cocinas.",
+    text: "Mirá el catálogo completo y escribinos por el artículo que te interese.",
     image: ""
   },
   {
     tag: "TECNOLOGÍA",
-    title: "Buscá rápido, filtrá mejor y comprá con confianza.",
-    text: "Diseño más cercano a un retail grande, con navegación clara y producto visible.",
+    title: "Buscá rápido y filtrá por marca, precio y categoría.",
+    text: "Más de 3000 artículos con atención personalizada en nuestras sucursales.",
     image: ""
   }
 ];

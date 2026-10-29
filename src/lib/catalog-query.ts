@@ -34,7 +34,7 @@ export async function runCatalogQuery(f: CatalogFilters): Promise<CatalogResult>
       $facet: {
         total: [{ $match: buildMatch(f) }, { $count: "n" }],
         categories: [{ $match: buildMatch(f, "category") }, ...countBy("category")],
-        subCategories: [{ $match: buildMatch(f) }, ...countBy("subCategory")],
+        subCategories: [{ $match: buildMatch(f, "subCategory") }, ...countBy("subCategory")],
         brands: [{ $match: buildMatch(f, "brand") }, ...countBy("brand")],
         price: [{ $match: buildMatch(f, "price") }, { $group: { _id: null, min: { $min: "$listPrice" }, max: { $max: "$listPrice" } } }]
       }

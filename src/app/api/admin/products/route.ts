@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAdmin, unauthorized } from "@/lib/admin-auth";
-import { buildMatch, parseFilters } from "@/lib/catalog-filters";
+import { buildAdminMatch, parseFilters } from "@/lib/catalog-filters";
 import { toPublicProduct } from "@/lib/catalog-query";
 import { connectDb } from "@/lib/db";
 import { productInputSchema, withSearchText } from "@/lib/product-schema";
@@ -13,13 +13,13 @@ export async function GET(request: Request) {
   await connectDb();
   const { searchParams } = new URL(request.url);
   const filters = parseFilters(searchParams);
-  const match = buildMatch({ ...filters, category: "", subCategory: "", brands: [], minPrice: undefined, maxPrice: undefined, availableOnly: false });
+  const match = buildAdminMatch(filters.q);
   const limit = Math.min(30, Math.max(1, Number(searchParams.get("limit")) || ADMIN_PAGE_SIZE));
   const [rows, total] = await Promise.all([
     ProductModel.find(match).sort({ createdAt: -1, _id: 1 }).skip((filters.page - 1) * limit).limit(limit).lean(),
     ProductModel.countDocuments(match)
   ]);
-  return NextResponse.json({ items: rows.map((r) => toPublicProduct(r as unknown as Record<string, unknown>)), total, page: filters.page, pageSize: limit });
+  return NextResponse.json({ items: rows.map((r) => ({ ...toPublicProduct(r as unknown as Record<string, unknown>), active: r.active !== false })), total, page: filters.page, pageSize: limit });
 }
 
 export async function POST(request: Request) {

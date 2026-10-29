@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildMatch, parseFilters, serializeFilters } from "./catalog-filters";
+import { buildAdminMatch, buildMatch, MAX_PAGE, parseFilters, serializeFilters } from "./catalog-filters";
 
 const parse = (qs: string) => parseFilters(new URLSearchParams(qs));
 
@@ -46,5 +46,30 @@ describe("buildMatch", () => {
   it("búsqueda: una regex por palabra, sin tildes, escapando caracteres especiales", () => {
     const m = buildMatch(parse(`q=${encodeURIComponent("Café (2+")}`));
     expect(m.$and).toEqual([{ searchText: { $regex: "cafe" } }, { searchText: { $regex: "\\(2\\+" } }]);
+  });
+});
+
+describe("hallazgos de la revisión", () => {
+  it("la faceta de subcategorías omite solo la subcategoría, no la categoría", () => {
+    const m = buildMatch(parse("category=Cocina&subCategory=Hornos"), "subCategory");
+    expect(m).toEqual({ active: { $ne: false }, category: "Cocina" });
+  });
+  it("page enorme se limita", () => {
+    expect(parse("page=1e20").page).toBe(MAX_PAGE);
+    expect(parse("page=999999").page).toBe(MAX_PAGE);
+  });
+  it("q se corta en largo y en cantidad de palabras", () => {
+    const f = parse(`q=${"a".repeat(500)}`);
+    expect(f.q.length).toBe(100);
+    const words = buildMatch(parse(`q=${Array.from({ length: 30 }, (_, i) => `w${i}`).join("+")}`)).$and as unknown[];
+    expect(words).toHaveLength(8);
+  });
+  it("marcas se limitan a 20", () => {
+    const qs = Array.from({ length: 50 }, (_, i) => `brand=B${i}`).join("&");
+    expect(parse(qs).brands).toHaveLength(20);
+  });
+  it("el match del admin no filtra por activo", () => {
+    expect(buildAdminMatch("heladera")).toEqual({ $and: [{ searchText: { $regex: "heladera" } }] });
+    expect(buildAdminMatch("")).toEqual({});
   });
 });

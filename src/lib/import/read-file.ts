@@ -8,6 +8,7 @@ export const MAX_IMPORT_ROWS = 10_000;
 function cellValue(value: ExcelJS.CellValue): unknown {
   if (value && typeof value === "object") {
     if (value instanceof Date) return value.toISOString();
+    if ("error" in value) return "";
     if ("result" in value) return value.result;
     if ("text" in value) return value.text;
     if ("richText" in value) return value.richText.map((part) => part.text).join("");
@@ -17,7 +18,7 @@ function cellValue(value: ExcelJS.CellValue): unknown {
 
 export async function readImportFile(buffer: Buffer, filename: string): Promise<{ rows: RawRow[]; columns: ColumnKey[] }> {
   const workbook = new ExcelJS.Workbook();
-  if (/\.csv$/i.test(filename)) await workbook.csv.read(Readable.from(buffer));
+  if (/\.csv$/i.test(filename)) await workbook.csv.read(Readable.from(buffer), { map: (value: unknown) => value });
   else await workbook.xlsx.load(buffer as unknown as ExcelJS.Buffer);
   const sheet = workbook.worksheets[0];
   if (!sheet) throw new Error("El archivo no tiene hojas.");

@@ -5,8 +5,9 @@ import { normalizeImageUrl } from "@/lib/image-url";
 import type { Product } from "@/lib/types";
 
 const pesos = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
-const emptyForm = { sku: "", name: "", description: "", category: "", subCategory: "", brand: "", cashPrice: "", listPrice: "", available: true, outlet: false, features: "" };
-type Page = { items: Product[]; total: number; page: number; pageSize: number };
+const emptyForm = { sku: "", name: "", description: "", category: "", subCategory: "", brand: "", cashPrice: "", listPrice: "", available: true, outlet: false, active: true, features: "" };
+type AdminProduct = Product & { active: boolean };
+type Page = { items: AdminProduct[]; total: number; page: number; pageSize: number };
 
 export function ProductsTab({ categories }: { categories: string[] }) {
   const [data, setData] = useState<Page>({ items: [], total: 0, page: 1, pageSize: 25 });
@@ -29,13 +30,13 @@ export function ProductsTab({ categories }: { categories: string[] }) {
     return () => window.clearTimeout(timer);
   }, [load]);
 
-  function edit(product: Product) {
+  function edit(product: AdminProduct) {
     setEditing(product.id);
     setImages(product.images ?? []);
     setForm({
       sku: product.sku ?? "", name: product.name, description: product.description, category: product.category,
       subCategory: product.subCategory ?? "", brand: product.brand ?? "", cashPrice: String(product.cashPrice), listPrice: String(product.listPrice),
-      available: product.available, outlet: product.outlet, features: (product.features ?? []).join("\n")
+      available: product.available, outlet: product.outlet, active: product.active, features: (product.features ?? []).join("\n")
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -104,6 +105,7 @@ export function ProductsTab({ categories }: { categories: string[] }) {
       <textarea value={form.features} onChange={(e) => set("features", e.target.value)} placeholder="Características, una por línea. Ej.: No Frost · 340 L" maxLength={400} />
       <textarea value={form.description} onChange={(e) => set("description", e.target.value)} placeholder="Descripción" />
       <label><input type="checkbox" checked={form.available} onChange={(e) => set("available", e.target.checked)} /> Disponible</label>
+      <label><input type="checkbox" checked={form.active} onChange={(e) => set("active", e.target.checked)} /> Visible en el catálogo (activo)</label>
       <label><input type="checkbox" checked={form.outlet} onChange={(e) => set("outlet", e.target.checked)} /> Producto outlet</label>
       {editing ? <div className="image-manager">
         <b>Imágenes</b>
@@ -122,10 +124,10 @@ export function ProductsTab({ categories }: { categories: string[] }) {
       {data.items.map((product) => (
         <article key={product.id}>
           <span>{product.image ? <img src={normalizeImageUrl(product.image, 120)} alt="" width={40} height={40} /> : "📦"}</span>
-          <div><b>{product.name}</b><small>{product.sku} · {product.category}{product.available ? "" : " · no disponible"}</small></div>
+          <div><b>{product.name}</b><small>{product.sku} · {product.category}{product.available ? "" : " · no disponible"}{product.active ? "" : " · INACTIVO"}</small></div>
           <strong>{pesos.format(product.cashPrice)} / {pesos.format(product.listPrice)}</strong>
           <button onClick={() => edit(product)}>Editar</button>
-          <button onClick={() => void deactivate(product.id)}>Desactivar</button>
+          {product.active ? <button onClick={() => void deactivate(product.id)}>Desactivar</button> : <button onClick={() => edit(product)}>Reactivar</button>}
         </article>
       ))}
       {data.items.length === 0 ? <small>No hay productos para mostrar.</small> : null}

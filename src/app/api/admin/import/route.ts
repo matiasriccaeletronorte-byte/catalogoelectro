@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
 import { isAdmin, unauthorized } from "@/lib/admin-auth";
 import { connectDb } from "@/lib/db";
-import { applyImport } from "@/lib/import/apply";
-import { parseRows } from "@/lib/import/parse-rows";
-import { planImport } from "@/lib/import/plan";
+import { ImportConflictError } from "@/lib/import/apply";
+import { runImport } from "@/lib/import/run";
 import { readImportFile } from "@/lib/import/read-file";
-import { ProductModel } from "@/models/Product";
 
 export async function POST(request: Request) {
   if (!(await isAdmin(request))) return unauthorized();
@@ -20,11 +18,11 @@ export async function POST(request: Request) {
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "No se pudo leer el archivo." }, { status: 400 });
   }
-  const { valid, errors: rowErrors } = parseRows(parsed.rows);
   await connectDb();
-  const existing = await ProductModel.find({ sku: { $in: valid.map((r) => r.sku) } }, "sku").lean();
-  const plan = planImport(valid, new Set(existing.map((p) => String(p.sku))));
-  const errors = [...rowErrors, ...plan.errors].sort((a, b) => a.rowNumber - b.rowNumber);
-  const counts = mode === "apply" ? await applyImport(plan) : { created: plan.toCreate.length, updated: plan.toUpdate.length };
-  return NextResponse.json({ mode, ...counts, errors, columns: parsed.columns });
+  try {
+    return NextResponse.json({ ...(await runImport(parsed.rows, mode)), columns: parsed.columns });
+  } catch (error) {
+    if (error instanceof ImportConflictError) return NextResponse.json({ error: error.message }, { status: 409 });
+    throw error;
+  }
 }

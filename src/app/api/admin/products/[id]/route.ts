@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { isAdmin, unauthorized } from "@/lib/admin-auth";
 import { connectDb } from "@/lib/db";
+import { isObjectId } from "@/lib/uploads";
 import { productInputSchema, withSearchText } from "@/lib/product-schema";
 import { ProductModel } from "@/models/Product";
 
@@ -10,6 +11,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!data.success) return NextResponse.json({ error: data.error.issues[0]?.message ?? "Datos de producto inválidos" }, { status: 400 });
   await connectDb();
   const { id } = await params;
+  if (!isObjectId(id)) return NextResponse.json({ error: "Producto no encontrado" }, { status: 404 });
   try {
     const product = await ProductModel.findByIdAndUpdate(id, withSearchText(data.data), { new: true });
     if (!product) return NextResponse.json({ error: "Producto no encontrado" }, { status: 404 });
@@ -24,6 +26,8 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   if (!(await isAdmin(request))) return unauthorized();
   await connectDb();
   const { id } = await params;
-  await ProductModel.findByIdAndUpdate(id, { active: false });
+  if (!isObjectId(id)) return NextResponse.json({ error: "Producto no encontrado" }, { status: 404 });
+  const product = await ProductModel.findByIdAndUpdate(id, { active: false });
+  if (!product) return NextResponse.json({ error: "Producto no encontrado" }, { status: 404 });
   return new Response(null, { status: 204 });
 }

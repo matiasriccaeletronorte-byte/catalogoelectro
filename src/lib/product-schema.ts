@@ -24,6 +24,9 @@ export function searchTextOf(doc: Searchable): string {
   return normalizeText([doc.sku, doc.name, doc.brand, doc.category, doc.subCategory].filter(Boolean).join(" "));
 }
 
-export function withSearchText<T extends Searchable>(doc: T): T & { searchText: string } {
-  return { ...doc, searchText: searchTextOf(doc) };
+export const skuKeyOf = (sku: string): string => sku.trim().toLowerCase();
+
+/** Agrega el texto de búsqueda y, si el documento trae SKU, la clave única sin distinguir mayúsculas. */
+export function withSearchText<T extends Searchable>(doc: T): T & { searchText: string; skuKey?: string } {
+  return { ...doc, searchText: searchTextOf(doc), ...(doc.sku ? { skuKey: skuKeyOf(doc.sku) } : {}) };
 }

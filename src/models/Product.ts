@@ -1,7 +1,8 @@
 import { InferSchemaType, model, models, Schema } from "mongoose";
 
 const productSchema = new Schema({
-  sku: { type: String, trim: true, unique: true, required: true },
+  sku: { type: String, trim: true, required: true },
+  skuKey: { type: String, unique: true, required: true },
   name: { type: String, required: true, trim: true },
   description: { type: String, default: "" },
   cashPrice: { type: Number, required: true, min: 0 },

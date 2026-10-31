@@ -280,19 +280,6 @@ export function AdminPanel() {
               </section>
 
               <section>
-                <h2>Fotos del local o equipo</h2>
-                <p>Se muestran a la derecha del bloque principal en formato carrusel. Pegá hasta diez enlaces, uno por línea.</p>
-                <textarea
-                  value={homeSettings.heroImages.join("\n")}
-                  onChange={(event) => setHomeSettings((current) => ({
-                    ...current,
-                    heroImages: event.target.value.split(/\r?\n/).map((image) => image.trim()).filter(Boolean).slice(0, 10)
-                  }))}
-                  placeholder="Enlaces de Google Drive o URLs públicas, una por línea"
-                />
-              </section>
-
-              <section>
                 <h2>Promos bancarias</h2>
                 <p>Contenido libre, independiente de los productos.</p>
                 <div className="home-editor-actions">

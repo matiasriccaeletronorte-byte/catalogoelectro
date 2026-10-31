@@ -56,7 +56,6 @@ export function HomePage({ shelves }: { shelves: HomeShelves }) {
   });
   const [error, setError] = useState("");
   const [slide, setSlide] = useState(0);
-  const [heroImage, setHeroImage] = useState(0);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(() => Date.now());
 
@@ -96,8 +95,8 @@ export function HomePage({ shelves }: { shelves: HomeShelves }) {
   };
 
   const bestSellers = useMemo(
-    () => resolveProducts(homepage.bestSellerIds, []).slice(0, 3),
-    [homepage.bestSellerIds, indexedProducts, featuredProducts]
+    () => resolveProducts(homepage.bestSellerIds, shelves.categories.map((shelf) => shelf.items[0]).filter(Boolean)).slice(0, 6),
+    [homepage.bestSellerIds, indexedProducts, featuredProducts, shelves.categories]
   );
   const offers = useMemo(() => {
     return resolveProducts(homepage.offerIds, shelves.outlet).slice(0, 6);
@@ -107,13 +106,6 @@ export function HomePage({ shelves }: { shelves: HomeShelves }) {
     const timer = setInterval(() => setSlide((current) => (current + 1) % carouselSlides.length), 6000);
     return () => clearInterval(timer);
   }, [carouselSlides.length]);
-
-  useEffect(() => {
-    setHeroImage(0);
-    if (homepage.heroImages.length < 2) return;
-    const timer = window.setInterval(() => setHeroImage((current) => (current + 1) % homepage.heroImages.length), 5000);
-    return () => window.clearInterval(timer);
-  }, [homepage.heroImages]);
 
   useEffect(() => {
     if (!homepage.offerTimers.some((timer) => timer.endsAt)) return;
@@ -212,48 +204,6 @@ export function HomePage({ shelves }: { shelves: HomeShelves }) {
       {shelves.categories.map((shelf) => (
         <ProductShelf key={shelf.name} eyebrow={`${shelf.total} producto${shelf.total === 1 ? "" : "s"}`} title={shelf.name} href={`/catalogo?category=${encodeURIComponent(shelf.name)}`} items={shelf.items} />
       ))}
-
-      <section className="hero">
-        <div className="hero-copy hero-copy-balanced">
-          <div className="hero-copy-content">
-            <p className="eyebrow">Electronorte Outlet</p>
-            <h1>Electrodomésticos y tecnología con una experiencia de compra clara.</h1>
-            <p className="hero-lead">
-              Un catálogo simple de recorrer, con stock visible, filtros útiles y una estética más cercana a los e-commerce que ya conocen tus clientes.
-            </p>
-          </div>
-
-          <div className="hero-feature-grid compact" aria-label="Beneficios de compra">
-            <article>
-              <strong>Compra rápida</strong>
-              <p>Buscá desde el header y filtrá desde el catálogo.</p>
-            </article>
-            <article>
-              <strong>Confianza</strong>
-              <p>Precio, categoría y stock al frente.</p>
-            </article>
-            <article>
-              <strong>Outlet</strong>
-              <p>Productos con foco en oportunidad y disponibilidad.</p>
-            </article>
-            <article>
-              <strong>Asesoramiento</strong>
-              <p>Seguimos mostrando el lado humano de la marca.</p>
-            </article>
-          </div>
-
-          <div className="hero-team-carousel" aria-label="Nuestro local y equipo">
-            {homepage.heroImages.length > 0 ? <>
-              <img key={`${homepage.heroImages[heroImage]}-${heroImage}`} className="carousel-enter" src={normalizeImageUrl(homepage.heroImages[heroImage])} alt="Electronorte: local o equipo" />
-              {homepage.heroImages.length > 1 ? <>
-                <button type="button" className="hero-team-arrow previous" onClick={() => setHeroImage((current) => (current - 1 + homepage.heroImages.length) % homepage.heroImages.length)} aria-label="Foto anterior">‹</button>
-                <button type="button" className="hero-team-arrow next" onClick={() => setHeroImage((current) => (current + 1) % homepage.heroImages.length)} aria-label="Foto siguiente">›</button>
-                <div className="hero-team-dots">{homepage.heroImages.map((image, index) => <button type="button" key={`${image}-${index}`} onClick={() => setHeroImage(index)} className={index === heroImage ? "active" : ""} aria-label={`Ver foto ${index + 1}`} />)}</div>
-              </> : null}
-            </> : <div className="hero-image-empty">Cargá fotos del local o equipo desde Administración → Home.</div>}
-          </div>
-        </div>
-      </section>
 
       {bestSellers.length > 0 ? <section id="mas-vendidos" className="offers">
         <div className="section-head offers-head">

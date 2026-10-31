@@ -4,12 +4,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { FormEvent, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useCart } from "./cart-provider";
 
 export function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const [darkHeader, setDarkHeader] = useState(false);
   const [search, setSearch] = useState("");
+  const { count, setOpen } = useCart();
   const isAdmin = pathname.startsWith("/admin");
 
   useEffect(() => {
@@ -69,6 +71,7 @@ export function Header() {
           <nav>
             <Link href="/catalogo">Productos</Link>
             <Link href="/promos-bancarias">Promos bancarias</Link>
+            <button type="button" className="cart-trigger" onClick={() => setOpen(true)} aria-label={`Ver pedido (${count} artículos)`}>Mi pedido{count > 0 ? <span className="cart-badge">{count}</span> : null}</button>
           </nav>
         </>
       )}

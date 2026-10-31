@@ -3,6 +3,8 @@ import "./globals.css";
 import "./interaction.css";
 import "./admin.css";
 import { Header } from "@/components/header";
+import { CartProvider } from "@/components/cart-provider";
+import { CartDrawer } from "@/components/cart-drawer";
 import { SiteSettingsProvider } from "@/components/site-settings-provider";
 import { getSiteSettings } from "@/lib/site-settings";
 
@@ -20,7 +22,9 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     <html lang="es">
       <body>
         <SiteSettingsProvider initial={settings}>
+          <CartProvider>
           <Header />
+          <CartDrawer />
           {children}
           {phone ? <a
             className="whatsapp-fab"
@@ -36,6 +40,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
               />
             </svg>
           </a> : null}
+          </CartProvider>
           <footer>Electronorte · Consultanos por WhatsApp</footer>
         </SiteSettingsProvider>
       </body>

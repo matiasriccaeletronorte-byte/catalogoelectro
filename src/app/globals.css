@@ -423,7 +423,7 @@ nav a:hover{background:rgba(227,6,47,.08)}
 .product-card strong{font-size:21px;letter-spacing:-.5px;margin-top:auto}
 .card-notes{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .card-notes span{padding:6px 9px;border-radius:4px;background:#f6f7f9;border:1px solid var(--line);font:10px "DM Mono";letter-spacing:.8px;color:var(--muted)}
-.card-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:14px}
+.card-footer{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;margin-top:14px}
 .card-footer span{font:11px "DM Mono";color:var(--muted);letter-spacing:1px}
 
 button{

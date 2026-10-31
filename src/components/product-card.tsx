@@ -6,6 +6,7 @@ import { Product } from "@/lib/types";
 import { normalizeImageUrl } from "@/lib/image-url";
 import { PriceBlock } from "./price-block";
 import { WhatsappButton } from "./whatsapp-button";
+import { AddToCartButton } from "./add-to-cart-button";
 
 export function ProductCard({ product, offerEndsAt, currentTime = Date.now() }: { product: Product; offerEndsAt?: string; currentTime?: number }) {
   const [imageIndex, setImageIndex] = useState(0);
@@ -43,7 +44,7 @@ export function ProductCard({ product, offerEndsAt, currentTime = Date.now() }: 
       <h3><Link href={`/productos/${product.id}`}>{product.name}</Link></h3>
       <p>{product.description}</p><PriceBlock product={product} />
       <div className="card-notes" aria-label="Características del producto">{features.length > 0 ? features.map((feature) => <span key={feature}>{feature}</span>) : <span>Consultá características y envío</span>}</div>
-      <div className="card-footer"><span>{product.available ? "Disponible" : "Consultar disponibilidad"}</span><WhatsappButton product={product} className="whatsapp-button small" /></div>
+      <div className="card-footer"><span>{product.available ? "Disponible" : "Consultar disponibilidad"}</span><AddToCartButton productId={product.id} className="add-cart-button small" /><WhatsappButton product={product} className="whatsapp-button small" /></div>
     </div>
   </article>;
 }

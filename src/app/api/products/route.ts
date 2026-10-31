@@ -6,7 +6,7 @@ import { ProductModel } from "@/models/Product";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const ids = (searchParams.get("ids") ?? "").split(",").map((id) => id.trim()).filter(Boolean).slice(0, 12);
+  const ids = (searchParams.get("ids") ?? "").split(",").map((id) => id.trim()).filter(Boolean).slice(0, 40);
   let body: unknown;
   if (ids.length > 0) {
     await connectDb();

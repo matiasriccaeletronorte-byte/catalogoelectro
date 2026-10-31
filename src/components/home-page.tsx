@@ -96,13 +96,12 @@ export function HomePage({ shelves }: { shelves: HomeShelves }) {
   };
 
   const bestSellers = useMemo(
-    () => resolveProducts(homepage.bestSellerIds, featuredProducts.slice(0, 3)).slice(0, 3),
+    () => resolveProducts(homepage.bestSellerIds, []).slice(0, 3),
     [homepage.bestSellerIds, indexedProducts, featuredProducts]
   );
   const offers = useMemo(() => {
-    const fallback = (featuredProducts.filter((product) => product.outlet).length ? featuredProducts.filter((product) => product.outlet) : featuredProducts).slice(0, 3);
-    return resolveProducts(homepage.offerIds, fallback).slice(0, 3);
-  }, [homepage.offerIds, indexedProducts, featuredProducts]);
+    return resolveProducts(homepage.offerIds, shelves.outlet).slice(0, 6);
+  }, [homepage.offerIds, indexedProducts, featuredProducts, shelves.outlet]);
 
   useEffect(() => {
     const timer = setInterval(() => setSlide((current) => (current + 1) % carouselSlides.length), 6000);
@@ -162,12 +161,12 @@ export function HomePage({ shelves }: { shelves: HomeShelves }) {
               </div>
             ) : null}
           </div>
-          <button className="retail-link" type="button" onClick={() => document.getElementById("mas-vendidos")?.scrollIntoView({ behavior: "smooth" })}>
+          {bestSellers.length > 0 ? <button className="retail-link" type="button" onClick={() => document.getElementById("mas-vendidos")?.scrollIntoView({ behavior: "smooth" })}>
             Más vendidos
-          </button>
-          <button className="retail-link" type="button" onClick={() => document.getElementById("ofertas")?.scrollIntoView({ behavior: "smooth" })}>
+          </button> : null}
+          {offers.length > 0 ? <button className="retail-link" type="button" onClick={() => document.getElementById("ofertas")?.scrollIntoView({ behavior: "smooth" })}>
             Ofertas
-          </button>
+          </button> : null}
           <Link className="retail-link" href="/promos-bancarias">
             Promos bancarias
           </Link>

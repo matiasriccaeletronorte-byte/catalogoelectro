@@ -250,12 +250,14 @@ nav a:hover{background:rgba(227,6,47,.08)}
 .hero-copy-content{grid-area:copy}
 .hero-copy-balanced .hero-feature-grid{grid-area:benefits}
 .hero-team-carousel{grid-area:visual;position:relative;height:565px;overflow:hidden;border-radius:8px;border:1px solid var(--line);background:#f8f9fb;box-shadow:var(--shadow-soft)}.hero-team-carousel>img{width:100%;height:100%;object-fit:cover}.hero-image-empty{height:100%;display:grid;place-items:center;padding:24px;border:1px dashed #c7ccd3;border-radius:8px;background:#f8f9fb;color:var(--muted);text-align:center;font-size:14px;line-height:1.6}.hero-team-arrow{position:absolute;top:50%;z-index:2;width:38px;height:38px;padding:0;border:0;border-radius:50%;background:rgba(17,17,18,.72);color:#fff;font-size:30px;line-height:1;transform:translateY(-50%);cursor:pointer}.hero-team-arrow:hover{background:#E52627}.hero-team-arrow.previous{left:14px}.hero-team-arrow.next{right:14px}.hero-team-dots{position:absolute;right:0;bottom:14px;left:0;z-index:2;display:flex;justify-content:center;gap:7px}.hero-team-dots button{width:9px;height:9px;padding:0;border:0;border-radius:50%;background:rgba(255,255,255,.65);cursor:pointer}.hero-team-dots button.active{width:24px;border-radius:999px;background:#E52627}
-.promo-hero{padding-top:10px}
+.promo-hero{max-width:none;margin:0;padding:0}
 .hero-carousel{
-  padding:20px;
-  border-radius:6px;
+  --gutter:max(4vw,20px);
+  padding:20px var(--gutter);
+  border-radius:0;
   background:linear-gradient(180deg,#fff,#f8f9fb);
-  border:1px solid var(--line);
+  border:0;
+  border-bottom:1px solid var(--line);
   display:grid;
   gap:14px;
 }
@@ -268,8 +270,10 @@ nav a:hover{background:rgba(227,6,47,.08)}
   aspect-ratio:10 / 3;
   height:auto;
   overflow:hidden;
-  border-radius:6px;
-  border:1px solid var(--line);
+  margin:0 calc(-1 * var(--gutter));
+  width:auto;
+  border-radius:0;
+  border:0;
   background:linear-gradient(135deg,#f5f6f8,#ffffff);
 }
 .hero-carousel-media img{
@@ -548,6 +552,7 @@ footer{padding:24px max(4vw,20px);color:var(--muted);font:11px "DM Mono";text-tr
 @media (max-width:1080px){
   header{grid-template-columns:auto minmax(260px,1fr) auto;gap:10px;padding-left:20px;padding-right:20px}
   .brand img{height:42px}.brand small{display:none}nav{gap:4px}nav a{padding-left:9px;padding-right:9px}
+  .hero-carousel{--gutter:16px}
   .promo-strip,.promo-hero,.offers,.catalog,.locations,.promo-bank-strip{padding-left:16px;padding-right:16px}
   .promo-strip{grid-template-columns:1fr}
   .hero,.catalog,.locations{grid-template-columns:1fr}

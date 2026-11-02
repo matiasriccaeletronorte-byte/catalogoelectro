@@ -3,7 +3,7 @@ import { Branch, branchesOrDefault } from "@/lib/branches";
 import { DEFAULT_TEMPLATE } from "@/lib/whatsapp";
 import { SiteSettingsModel } from "@/models/SiteSettings";
 
-export type SiteSettings = { whatsappPhone: string; whatsappTemplate: string; bbvaDates: string[]; branches: Branch[] };
+export type SiteSettings = { whatsappPhone: string; whatsappTemplate: string; bbvaDates: string[]; branches: Branch[]; categoryImages: { name: string; image: string }[] };
 
 export async function getSiteSettings(): Promise<SiteSettings> {
   await connectDb();
@@ -12,6 +12,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     whatsappPhone: doc?.whatsappPhone ?? "",
     whatsappTemplate: doc?.whatsappTemplate || DEFAULT_TEMPLATE,
     bbvaDates: [...(doc?.bbvaDates ?? [])].sort(),
-    branches: branchesOrDefault(doc?.branches)
+    branches: branchesOrDefault(doc?.branches),
+    categoryImages: (doc?.categoryImages ?? []).map((item) => ({ name: item.name, image: item.image }))
   };
 }

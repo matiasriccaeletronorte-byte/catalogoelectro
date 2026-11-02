@@ -5,6 +5,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { HomeShelves } from "@/lib/home-shelves";
 import { ProductShelf } from "./product-shelf";
+import { CategoryStrip } from "./category-strip";
+import type { CategoryTile } from "@/lib/home-categories";
 import { useSiteSettings } from "./site-settings-provider";
 import { ProductCard } from "@/components/product-card";
 import { Product } from "@/lib/types";
@@ -41,7 +43,7 @@ const defaultSlides = [
 ];
 
 
-export function HomePage({ shelves }: { shelves: HomeShelves }) {
+export function HomePage({ shelves, categoryTiles }: { shelves: HomeShelves; categoryTiles: CategoryTile[] }) {
   const { branches } = useSiteSettings();
   const router = useRouter();
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
@@ -200,6 +202,8 @@ export function HomePage({ shelves }: { shelves: HomeShelves }) {
           </div>
         </div>
       </section>
+
+      <CategoryStrip tiles={categoryTiles} />
 
       <ProductShelf eyebrow="Outlet" title="Oportunidades outlet" href="/catalogo" items={shelves.outlet} />
       {shelves.categories.map((shelf) => (

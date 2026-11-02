@@ -17,7 +17,8 @@ const schema = z.object({
   whatsappPhone: z.string().trim().max(30),
   whatsappTemplate: z.string().trim().max(500),
   bbvaDates: z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).max(60),
-  branches: z.array(branchSchema).max(6)
+  branches: z.array(branchSchema).max(6),
+  categoryImages: z.array(z.object({ name: z.string().trim().min(1).max(80), image: z.string().max(300).regex(/^(https:\/\/\S+|\/api\/uploads\/\S+)$/) })).max(200).default([])
 });
 
 export async function GET(request: Request) {

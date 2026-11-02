@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import type { Branch } from "@/lib/branches";
+import { shrinkImage } from "@/lib/client-image";
 import { DEFAULT_TEMPLATE } from "@/lib/whatsapp";
 
 export function SettingsTab() {
@@ -10,12 +11,17 @@ export function SettingsTab() {
   const [dates, setDates] = useState<string[]>([]);
   const [newDate, setNewDate] = useState("");
   const [branches, setBranches] = useState<Branch[]>([]);
+  const [categoryImages, setCategoryImages] = useState<{ name: string; image: string }[]>([]);
+  const [categoryNames, setCategoryNames] = useState<string[]>([]);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
     fetch("/api/admin/settings").then((r) => (r.ok ? r.json() : null)).then((s) => {
       if (!s) return;
-      setPhone(s.whatsappPhone); setTemplate(s.whatsappTemplate || DEFAULT_TEMPLATE); setDates(s.bbvaDates); setBranches(s.branches ?? []);
+      setPhone(s.whatsappPhone); setTemplate(s.whatsappTemplate || DEFAULT_TEMPLATE); setDates(s.bbvaDates); setBranches(s.branches ?? []); setCategoryImages(s.categoryImages ?? []);
+    });
+    fetch("/api/products").then((r) => (r.ok ? r.json() : null)).then((data) => {
+      if (data) setCategoryNames((data.facets?.categories ?? []).map((c: { value: string }) => c.value));
     });
   }, []);
 
@@ -23,7 +29,7 @@ export function SettingsTab() {
     event.preventDefault();
     const response = await fetch("/api/admin/settings", {
       method: "PUT", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ whatsappPhone: phone, whatsappTemplate: template, bbvaDates: dates, branches })
+      body: JSON.stringify({ whatsappPhone: phone, whatsappTemplate: template, bbvaDates: dates, branches, categoryImages })
     });
     setMessage(response.ok ? "Guardado." : "No se pudo guardar. Revisá los datos.");
   }
@@ -31,6 +37,17 @@ export function SettingsTab() {
   const updateBranch = (index: number, field: keyof Branch, value: string) =>
     setBranches(branches.map((branch, i) => (i === index ? { ...branch, [field]: value } : branch)));
   const addBranch = () => setBranches([...branches, { name: "", city: "", phone: "", whatsapp: "", query: "" }]);
+
+  async function uploadCategoryImage(name: string, file: File | undefined) {
+    if (!file) return;
+    const body = new FormData();
+    body.set("file", await shrinkImage(file, 800));
+    const response = await fetch("/api/admin/banner-image", { method: "POST", body });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) return setMessage(result.error ?? "No se pudo subir la imagen.");
+    setCategoryImages([...categoryImages.filter((item) => item.name !== name), { name, image: result.url }]);
+    setMessage("Imagen subida. Tocá Guardar para publicarla.");
+  }
 
   function addDate() {
     if (newDate && !dates.includes(newDate)) setDates([...dates, newDate].sort());
@@ -69,6 +86,20 @@ export function SettingsTab() {
       <button type="button" onClick={() => setBranches(branches.filter((_, i) => i !== index))}>Quitar sucursal</button>
     </fieldset>)}
     <button type="button" onClick={addBranch}>Agregar sucursal</button>
+
+    <h2>Imágenes de las categorías</h2>
+    <small>Se ven en el selector rápido de la home. Si una categoría no tiene imagen, se usa la foto de uno de sus artículos. Mejor con fondo transparente o blanco y el producto centrado.</small>
+    {categoryNames.map((name) => {
+      const current = categoryImages.find((item) => item.name === name);
+      return <div className="slide-image-field" key={name}>
+        {current ? <img src={current.image} alt={name} style={{ width: 56, height: 56, objectFit: "contain" }} /> : <span style={{ width: 56, height: 56 }}>Auto</span>}
+        <b>{name}</b>
+        <label className="slide-image-upload">{current ? "Cambiar" : "Subir imagen"}
+          <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => { void uploadCategoryImage(name, e.target.files?.[0]); e.target.value = ""; }} />
+        </label>
+        {current ? <button type="button" onClick={() => setCategoryImages(categoryImages.filter((item) => item.name !== name))}>Quitar</button> : null}
+      </div>;
+    })}
 
     <button type="submit">Guardar</button>
     <small>{message}</small>

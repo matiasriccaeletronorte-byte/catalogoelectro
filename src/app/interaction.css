@@ -196,3 +196,18 @@ html{scroll-behavior:smooth}
 header nav a,header nav .cart-trigger{white-space:nowrap}
 header .header-search{min-width:0}
 header .header-search-input{min-width:0;flex:1}
+
+/* Selector rápido de categorías */
+.category-strip{position:relative;max-width:1280px;margin:0 auto;padding:18px max(4vw,20px) 6px}
+.strip-track{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;scroll-snap-type:x proximity;padding:4px 2px 8px}
+.strip-track::-webkit-scrollbar{display:none}
+.strip-item{flex:0 0 112px;display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px 4px;text-decoration:none;color:var(--text);text-align:center;border-radius:var(--radius-lg);scroll-snap-align:start;transition:background .2s ease,transform .2s ease}
+.strip-item:hover{background:var(--surface);transform:translateY(-2px);box-shadow:var(--shadow-soft)}
+.strip-image{width:88px;height:88px;display:grid;place-items:center;font-size:34px}
+.strip-image img{width:100%;height:100%;object-fit:contain}
+.strip-name{font-size:13px;line-height:1.25;font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.strip-arrow{position:absolute;top:44px;z-index:2;width:38px;height:38px;padding:0 0 3px;border-radius:50%;border:2px solid var(--brand);background:#fff;color:var(--brand);box-shadow:0 6px 16px rgba(31,35,40,.18);font-size:24px;font-weight:700;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.strip-arrow.previous{left:max(1vw,6px)}
+.strip-arrow.next{right:max(1vw,6px)}
+.strip-arrow:hover{background:var(--brand);color:#fff}
+@media(max-width:860px){.strip-arrow{display:none}.strip-item{flex-basis:92px}.strip-image{width:68px;height:68px}}

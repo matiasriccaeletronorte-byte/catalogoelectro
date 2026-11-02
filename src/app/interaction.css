@@ -178,3 +178,16 @@ header.header-dark .cart-badge{background:#fff;color:#E52627}
 .cart-foot{background:var(--surface);box-shadow:0 -8px 20px rgba(31,35,40,.06)}
 .cart-total:first-child b{color:#1fa855}
 .cart-total b{color:var(--brand)}
+
+/* Accesibilidad y carga */
+:focus-visible{outline:3px solid #E52627;outline-offset:2px}
+header.header-red :focus-visible{outline-color:#fff}
+.catalog-loading{max-width:1280px;margin:40px auto;padding:0 20px;color:var(--muted);text-align:center}
+.product-card .product-image img{aspect-ratio:1/1;object-fit:contain}
+.cart-drawer{overscroll-behavior:contain}
+@media(max-width:700px){
+  .product-buy-box .add-cart-button.large{position:sticky;bottom:0;z-index:5;box-shadow:0 -8px 16px rgba(31,35,40,.12)}
+  .cart-drawer{width:100%}
+}
+html{scroll-behavior:smooth}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}

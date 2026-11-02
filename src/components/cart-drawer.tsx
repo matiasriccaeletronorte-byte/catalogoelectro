@@ -34,7 +34,7 @@ export function CartDrawer() {
           const product = products.get(line.id)!;
           const image = normalizeImageUrl((product.images?.[0] ?? product.image) || "");
           return <div className="cart-line" key={line.id}>
-            <div className="cart-thumb">{/^https?:|^\//.test(image) ? <img src={image} alt="" /> : <span>📦</span>}</div>
+            <div className="cart-thumb">{/^https?:|^\//.test(image) ? <img src={image} alt="" loading="lazy" width={64} height={64} /> : <span>📦</span>}</div>
             <div className="cart-line-info">
               <b>{product.name}</b>
               {product.sku ? <small>SKU {product.sku}</small> : null}

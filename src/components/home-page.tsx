@@ -124,6 +124,7 @@ export function HomePage({ shelves }: { shelves: HomeShelves }) {
 
   return (
     <main className="home">
+      <h1 className="sr-only">Electronorte Outlet: electrodomésticos y tecnología en Los Polvorines</h1>
       <section className="retail-nav" aria-label="Accesos rápidos">
         <div className="retail-nav-row">
           <div className="dropdown">

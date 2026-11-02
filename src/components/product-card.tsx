@@ -31,7 +31,7 @@ export function ProductCard({ product, offerEndsAt, currentTime = Date.now() }: 
   return <article className="product-card">
     <div className="product-image-wrap">
       <Link href={`/productos/${product.id}`} className="product-image" aria-label={`Ver ${product.name}`}>
-        {isImageUrl ? <img src={image} alt={product.name} /> : <span>{image || "📦"}</span>}
+        {isImageUrl ? <img src={image} alt={product.name} loading="lazy" decoding="async" width={400} height={400} /> : <span>{image || "📦"}</span>}
       </Link>
       {images.length > 1 ? <>
         <button type="button" className="product-image-arrow previous" onClick={(event) => changeImage(event, -1)} aria-label="Imagen anterior">‹</button>

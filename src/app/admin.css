@@ -145,3 +145,9 @@
   .product-admin-list article button{grid-row:auto}
   .category-form{display:grid}
 }
+
+.slide-image-field{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.slide-image-field img{width:160px;height:56px;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
+.slide-image-field>span{width:160px;height:56px;display:grid;place-items:center;border:1px dashed var(--line);border-radius:6px;color:var(--muted);font-size:12px}
+.slide-image-upload{display:inline-flex;align-items:center;padding:8px 12px;border-radius:6px;background:var(--brand);color:#fff;font-weight:700;font-size:13px;cursor:pointer}
+.slide-image-upload input{display:none}

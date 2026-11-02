@@ -10,7 +10,10 @@ export function ProductShelf({ eyebrow, title, href, items }: { eyebrow: string;
   if (items.length === 0) return null;
   const scroll = (direction: number) => {
     const el = track.current;
-    if (el) el.scrollBy({ left: direction * el.clientWidth * 0.85, behavior: "smooth" });
+    if (!el) return;
+    const step = Math.max(el.clientWidth * 0.85, 240);
+    const target = Math.max(0, Math.min(el.scrollLeft + direction * step, el.scrollWidth - el.clientWidth));
+    el.scrollTo({ left: target, behavior: "smooth" });
   };
   return <section className="offers product-shelf">
     <div className="section-head offers-head">

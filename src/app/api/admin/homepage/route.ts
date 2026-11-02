@@ -16,7 +16,7 @@ const schema = z.object({
     tag: z.string().max(40),
     title: z.string().max(80),
     text: z.string().max(180),
-    image: z.string().max(300).default("")
+    image: z.string().max(300).regex(/^(|https:\/\/\S+|\/api\/uploads\/\S+)$/).default("")
   })).default([]),
   bankPromotions: z.array(z.object({
     title: z.string().max(60),

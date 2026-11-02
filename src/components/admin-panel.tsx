@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { shrinkImage } from "@/lib/client-image";
 import { normalizeImageUrl } from "@/lib/image-url";
 import type { Product } from "@/lib/types";
 import { ProductsTab } from "./admin/products-tab";
@@ -156,6 +157,17 @@ export function AdminPanel() {
     });
   };
 
+  const uploadSlideImage = async (index: number, file: File | undefined) => {
+    if (!file) return;
+    const body = new FormData();
+    body.set("file", await shrinkImage(file, 2400));
+    const response = await fetch("/api/admin/banner-image", { method: "POST", body });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) return setMessage(result.error ?? "No se pudo subir la imagen.");
+    updateSlide(index, "image", result.url);
+    setMessage("Imagen subida. Guardá los cambios para publicarla.");
+  };
+
   const updateBankPromo = (index: number, field: keyof typeof emptyBankPromo, value: string) => {
     setHomeSettings((current) => {
       const bankPromotions = [...current.bankPromotions];
@@ -271,8 +283,15 @@ export function AdminPanel() {
                       <input value={slide.tag} onChange={(event) => updateSlide(index, "tag", event.target.value)} placeholder="Etiqueta" />
                       <input value={slide.title} onChange={(event) => updateSlide(index, "title", event.target.value)} placeholder="Título" />
                       <textarea value={slide.text} onChange={(event) => updateSlide(index, "text", event.target.value)} placeholder="Texto" />
-                      <input value={slide.image} onChange={(event) => updateSlide(index, "image", event.target.value)} onBlur={(event) => updateSlide(index, "image", normalizeImageUrl(event.target.value, 1000))} placeholder="Enlace compartido de Google Drive" />
-                      <small>Compartí el archivo en Drive como “Cualquiera con el enlace”. Para un mejor resultado, usá formato horizontal.</small>
+                      <div className="slide-image-field">
+                        {slide.image ? <img src={slide.image} alt="Imagen del slide" /> : <span>Sin imagen</span>}
+                        <label className="slide-image-upload">
+                          {slide.image ? "Cambiar imagen" : "Subir imagen"}
+                          <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => { void uploadSlideImage(index, event.target.files?.[0]); event.target.value = ""; }} />
+                        </label>
+                        {slide.image ? <button type="button" onClick={() => updateSlide(index, "image", "")}>Quitar imagen</button> : null}
+                      </div>
+                      <small>La imagen se sube a la tienda (JPG, PNG o WebP, hasta 4 MB). Mejor en formato horizontal, por ejemplo 1920 × 576.</small>
                       <button type="button" onClick={() => removeSlide(index)}>Eliminar slide</button>
                     </article>
                   ))}

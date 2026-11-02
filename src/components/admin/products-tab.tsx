@@ -10,7 +10,7 @@ const emptyForm = { sku: "", name: "", description: "", category: "", subCategor
 type AdminProduct = Product & { active: boolean };
 type Page = { items: AdminProduct[]; total: number; page: number; pageSize: number };
 
-export function ProductsTab({ categories }: { categories: string[] }) {
+export function ProductsTab({ categories, subCategories = {} }: { categories: string[]; subCategories?: Record<string, string[]> }) {
   const [data, setData] = useState<Page>({ items: [], total: 0, page: 1, pageSize: 25 });
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
@@ -98,7 +98,8 @@ export function ProductsTab({ categories }: { categories: string[] }) {
       <input value={form.sku} onChange={(e) => set("sku", e.target.value)} placeholder="SKU (código único)" required />
       <input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="Nombre" required />
       <input value={form.category} onChange={(e) => set("category", e.target.value)} placeholder="Categoría" list="categories" required />
-      <input value={form.subCategory} onChange={(e) => set("subCategory", e.target.value)} placeholder="Subcategoría" />
+      <input value={form.subCategory} onChange={(e) => set("subCategory", e.target.value)} placeholder="Subcategoría" list="subcategories" />
+      <datalist id="subcategories">{(subCategories[form.category] ?? []).map((s) => <option key={s} value={s} />)}</datalist>
       <input value={form.brand} onChange={(e) => set("brand", e.target.value)} placeholder="Marca" />
       <datalist id="categories">{categories.map((c) => <option key={c} value={c} />)}</datalist>
       <input value={form.cashPrice} onChange={(e) => set("cashPrice", e.target.value.replace(/\D/g, ""))} placeholder="Precio en efectivo" inputMode="numeric" required />

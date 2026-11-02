@@ -151,3 +151,9 @@
 .slide-image-field>span{width:160px;height:56px;display:grid;place-items:center;border:1px dashed var(--line);border-radius:6px;color:var(--muted);font-size:12px}
 .slide-image-upload{display:inline-flex;align-items:center;padding:8px 12px;border-radius:6px;background:var(--brand);color:#fff;font-weight:700;font-size:13px;cursor:pointer}
 .slide-image-upload input{display:none}
+
+.category-tree{display:grid;gap:14px;margin-top:14px}
+.category-node{border:1px solid var(--line);border-radius:var(--radius-lg);padding:14px;background:var(--surface)}
+.category-node h3{margin:0 0 8px}
+.category-node .category-list span button{border:0;background:none;cursor:pointer;color:var(--muted);padding:0 0 0 4px}
+.category-node .category-form{margin-top:10px}

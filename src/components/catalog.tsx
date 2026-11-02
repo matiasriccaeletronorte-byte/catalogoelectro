@@ -52,9 +52,9 @@ export function Catalog() {
 
   return <main className="catalog catalog-page">
     <div className="catalog-mobile-bar">
-      <button type="button" onClick={() => setPanelOpen(true)}>Filtros{chips.length ? ` (${chips.length})` : ""}</button>
+      <button type="button" aria-expanded={panelOpen} onClick={() => setPanelOpen(!panelOpen)}>Filtros{chips.length ? ` (${chips.length})` : ""} {panelOpen ? "▴" : "▾"}</button>
     </div>
-    <CatalogFiltersPanel filters={filters} facets={result?.facets} open={panelOpen} onClose={() => setPanelOpen(false)} onChange={update} />
+    <CatalogFiltersPanel filters={filters} facets={result?.facets} open={panelOpen} onChange={update} />
     <div className="catalog-content">
       <div className="catalog-toolbar">
         <div className="section-head">

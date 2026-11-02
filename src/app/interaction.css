@@ -1,3 +1,4 @@
+button{color:inherit}
 header{transition:background-color .55s ease,border-color .55s ease,box-shadow .55s ease}
 header.header-red{
   background:#E52627;
@@ -108,14 +109,13 @@ header.header-dark .cart b{background:#fff;color:#E52627}
 .catalog-sort{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
 .catalog-sort select{padding:8px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface)}
 .product-grid.is-loading{opacity:.55;transition:opacity .15s}
-.catalog-mobile-bar,.filters-close{display:none}
+.catalog-mobile-bar{display:none}
 @media (max-width:860px){
   .catalog-page{grid-template-columns:1fr}
   .catalog-mobile-bar{display:block;margin-bottom:12px}
   .catalog-mobile-bar button{padding:10px 14px;border:1px solid var(--line);border-radius:var(--radius-md);background:var(--surface);font-weight:800}
-  .filters-panel{display:none;position:fixed;inset:0;z-index:50;overflow:auto;background:var(--surface);padding:20px}
+  .filters-panel{display:none;margin-bottom:12px}
   .filters-panel.open{display:block}
-  .filters-close{display:block;margin-left:auto}
 }
 
 .product-shelf{padding-bottom:36px}

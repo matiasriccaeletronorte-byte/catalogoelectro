@@ -30,6 +30,7 @@ export function AdminPanel() {
   const [loginError, setLoginError] = useState("");
   const [tab, setTab] = useState<Tab>("products");
   const [categories, setCategories] = useState<string[]>([]);
+  const [subTree, setSubTree] = useState<Record<string, string[]>>({});
   const [message, setMessage] = useState("");
   const [homeSettings, setHomeSettings] = useState<HomepageSettings>({
     bestSellerIds: [],
@@ -44,13 +45,15 @@ export function AdminPanel() {
   const [pickerResults, setPickerResults] = useState<Record<FeaturedKey, Product[]>>({ bestSellerIds: [], offerIds: [] });
 
   const load = async () => {
-    const [categoryData, homepageData] = await Promise.all([
+    const [categoryData, subData, homepageData] = await Promise.all([
       fetch("/api/admin/categories").then((r) => (r.ok ? r.json() : [])),
+      fetch("/api/admin/subcategories").then((r) => (r.ok ? r.json() : {})),
       fetch("/api/admin/homepage").then((r) =>
         r.ok ? r.json() : { bestSellerIds: [], offerIds: [], offerTimers: [], heroImages: [], carouselSlides: [], bankPromotions: [] }
       )
     ]);
     setCategories(categoryData);
+    setSubTree(subData);
     setHomeSettings({
       bestSellerIds: (homepageData.bestSellerIds ?? []).slice(0, 3),
       offerIds: (homepageData.offerIds ?? []).slice(0, 3),
@@ -103,6 +106,21 @@ export function AdminPanel() {
     });
     if (!response.ok) return;
     form.reset();
+    void load();
+  }
+
+  async function addSubCategory(category: string, form: HTMLFormElement) {
+    const name = String(new FormData(form).get("sub") ?? "").trim();
+    if (name.length < 2) return;
+    const response = await fetch("/api/admin/subcategories", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ category, name }) });
+    if (!response.ok) return setMessage("No se pudo crear la subcategoría.");
+    form.reset();
+    void load();
+  }
+
+  async function removeSubCategory(category: string, name: string) {
+    const response = await fetch("/api/admin/subcategories", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ category, name }) });
+    if (!response.ok) return setMessage((await response.json().catch(() => ({}))).error ?? "No se pudo quitar la subcategoría.");
     void load();
   }
 
@@ -321,7 +339,7 @@ export function AdminPanel() {
           </>
         )}
 
-        {tab === "products" && <ProductsTab categories={categories} />}
+        {tab === "products" && <ProductsTab categories={categories} subCategories={subTree} />}
         {tab === "import" && <ImportTab />}
         {tab === "settings" && <SettingsTab />}
 
@@ -333,9 +351,21 @@ export function AdminPanel() {
               <input name="category" placeholder="Nueva categoría" required />
               <button>Agregar</button>
             </form>
-            <div className="category-list">
-              {categories.map((category) => <span key={category}>{category}</span>)}
+            <small>Creá la categoría y después sumale sus subcategorías. Al cargar un artículo las elegís de la lista.</small>
+            <div className="category-tree">
+              {categories.map((category) => <section key={category} className="category-node">
+                <h3>{category}</h3>
+                <div className="category-list">
+                  {(subTree[category] ?? []).map((sub) => <span key={sub}>{sub} <button type="button" aria-label={`Quitar ${sub}`} onClick={() => void removeSubCategory(category, sub)}>✕</button></span>)}
+                  {(subTree[category] ?? []).length === 0 ? <small>Sin subcategorías</small> : null}
+                </div>
+                <form className="category-form" onSubmit={(event) => { event.preventDefault(); void addSubCategory(category, event.currentTarget); }}>
+                  <input name="sub" placeholder={`Nueva subcategoría de ${category}`} />
+                  <button>Agregar</button>
+                </form>
+              </section>)}
             </div>
+            <small>{message}</small>
           </>
         )}
       </section>

@@ -7,7 +7,7 @@ import type { CatalogResult } from "@/lib/catalog-query";
 import { CatalogFiltersPanel } from "./catalog-filters-panel";
 import { ProductCard } from "./product-card";
 
-const SORT_OPTIONS: { key: SortKey; label: string }[] = [{ key: "relevance", label: "Sin ordenar" }, { key: "price_asc", label: "Menor precio" }, { key: "price_desc", label: "Mayor precio" }];
+const SORT_OPTIONS: { key: SortKey; label: string }[] = [{ key: "price_asc", label: "Menor precio" }, { key: "price_desc", label: "Mayor precio" }];
 const pesos = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
 
 export function Catalog() {
@@ -46,6 +46,8 @@ export function Catalog() {
     const label = `${filters.minPrice !== undefined ? pesos.format(filters.minPrice) : "Desde $0"} – ${filters.maxPrice !== undefined ? pesos.format(filters.maxPrice) : "sin tope"}`;
     chips.push({ label, remove: () => update({ minPrice: undefined, maxPrice: undefined }) });
   }
+  const sortLabel = SORT_OPTIONS.find((o) => o.key === filters.sort)?.label;
+  if (sortLabel) chips.push({ label: sortLabel, remove: () => update({ sort: "relevance" }) });
   if (filters.outletOnly) chips.push({ label: "Outlet", remove: () => update({ outletOnly: false }) });
   if (filters.availableOnly) chips.push({ label: "Solo disponibles", remove: () => update({ availableOnly: false }) });
 
@@ -64,7 +66,8 @@ export function Catalog() {
           <div className="catalog-summary">{result ? <span><strong>{result.total}</strong> producto{result.total === 1 ? "" : "s"}</span> : null}</div>
         </div>
         <label className="catalog-sort">Ordenar por
-          <select value={SORT_OPTIONS.some((o) => o.key === filters.sort) ? filters.sort : "relevance"} onChange={(e) => update({ sort: e.target.value as SortKey })}>
+          <select value={SORT_OPTIONS.some((o) => o.key === filters.sort) ? filters.sort : ""} onChange={(e) => update({ sort: e.target.value as SortKey })}>
+            <option value="" disabled>Elegir…</option>
             {SORT_OPTIONS.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
           </select>
         </label>

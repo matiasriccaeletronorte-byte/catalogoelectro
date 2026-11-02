@@ -3,7 +3,7 @@ import { normalizeText } from "@/lib/text";
 export type SortKey = "relevance" | "price_asc" | "price_desc" | "newest";
 export type CatalogFilters = {
   q: string; category: string; subCategory: string; brands: string[];
-  minPrice?: number; maxPrice?: number; availableOnly: boolean; sort: SortKey; page: number;
+  minPrice?: number; maxPrice?: number; availableOnly: boolean; outletOnly: boolean; sort: SortKey; page: number;
 };
 
 export const PAGE_SIZE = 24;
@@ -30,6 +30,7 @@ export function parseFilters(params: URLSearchParams): CatalogFilters {
     minPrice: positiveNumber(params.get("minPrice")),
     maxPrice: positiveNumber(params.get("maxPrice")),
     availableOnly: params.get("available") === "1",
+    outletOnly: params.get("outlet") === "1",
     sort: SORTS.includes(sort) ? sort : "relevance",
     page: Number.isFinite(page) && page >= 1 ? Math.min(page, MAX_PAGE) : 1
   };
@@ -44,6 +45,7 @@ export function serializeFilters(f: CatalogFilters): URLSearchParams {
   if (f.minPrice !== undefined) p.set("minPrice", String(f.minPrice));
   if (f.maxPrice !== undefined) p.set("maxPrice", String(f.maxPrice));
   if (f.availableOnly) p.set("available", "1");
+  if (f.outletOnly) p.set("outlet", "1");
   if (f.sort !== "relevance") p.set("sort", f.sort);
   if (f.page > 1) p.set("page", String(f.page));
   return p;
@@ -54,6 +56,7 @@ const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 export function buildMatch(f: CatalogFilters, omit?: "category" | "subCategory" | "brand" | "price"): Record<string, unknown> {
   const match: Record<string, unknown> = { active: { $ne: false } };
   if (f.availableOnly) match.available = true;
+  if (f.outletOnly) match.outlet = true;
   if (omit !== "category" && omit !== "subCategory" && f.category) match.category = f.category;
   if (omit !== "category" && omit !== "subCategory" && f.subCategory) match.subCategory = f.subCategory;
   if (omit === "subCategory" && f.category) match.category = f.category;

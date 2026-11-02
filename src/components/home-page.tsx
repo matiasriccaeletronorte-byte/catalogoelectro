@@ -162,6 +162,9 @@ export function HomePage({ shelves, categoryTiles }: { shelves: HomeShelves; cat
           {offers.length > 0 ? <button className="retail-link" type="button" onClick={() => document.getElementById("ofertas")?.scrollIntoView({ behavior: "smooth" })}>
             Ofertas
           </button> : null}
+          <Link className="retail-link" href="/catalogo?outlet=1">
+            Outlet
+          </Link>
           <Link className="retail-link" href="/promos-bancarias">
             Promos bancarias
           </Link>

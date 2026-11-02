@@ -16,6 +16,11 @@ export function CatalogFiltersPanel({ filters, facets, open, onChange }: Props) 
   }
 
   return <aside className={`categories filters-panel${open ? " open" : ""}`} aria-label="Filtros">
+    <label className="facet-check facet-outlet">
+      <input type="checkbox" checked={filters.outletOnly} onChange={(e) => onChange({ outletOnly: e.target.checked })} />
+      <b>Solo Outlet</b>
+    </label>
+
     <p>Categorías</p>
     {filters.category ? <button type="button" className="facet-back" onClick={() => onChange({ category: "", subCategory: "" })}>← Todas las categorías</button> : null}
     {facets?.categories.filter((c) => !filters.category || c.value === filters.category).map((c) => (

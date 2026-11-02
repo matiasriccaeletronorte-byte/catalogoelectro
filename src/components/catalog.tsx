@@ -46,6 +46,7 @@ export function Catalog() {
     const label = `${filters.minPrice !== undefined ? pesos.format(filters.minPrice) : "Desde $0"} – ${filters.maxPrice !== undefined ? pesos.format(filters.maxPrice) : "sin tope"}`;
     chips.push({ label, remove: () => update({ minPrice: undefined, maxPrice: undefined }) });
   }
+  if (filters.outletOnly) chips.push({ label: "Outlet", remove: () => update({ outletOnly: false }) });
   if (filters.availableOnly) chips.push({ label: "Solo disponibles", remove: () => update({ availableOnly: false }) });
 
   const totalPages = result ? Math.max(1, Math.ceil(result.total / PAGE_SIZE)) : 1;
@@ -59,7 +60,7 @@ export function Catalog() {
       <div className="catalog-toolbar">
         <div className="section-head">
           <p>Catálogo</p>
-          <h1>{filters.category || "Todos los productos"}</h1>
+          <h1>{filters.category || (filters.outletOnly ? "Outlet" : "Todos los productos")}</h1>
           <div className="catalog-summary">{result ? <span><strong>{result.total}</strong> producto{result.total === 1 ? "" : "s"}</span> : null}</div>
         </div>
         <label className="catalog-sort">Ordenar por

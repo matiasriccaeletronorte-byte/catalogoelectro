@@ -5,7 +5,7 @@ const parse = (qs: string) => parseFilters(new URLSearchParams(qs));
 
 describe("parseFilters", () => {
   it("valores por defecto", () => {
-    expect(parse("")).toEqual({ q: "", category: "", subCategory: "", brands: [], minPrice: undefined, maxPrice: undefined, availableOnly: false, sort: "relevance", page: 1 });
+    expect(parse("")).toEqual({ q: "", category: "", subCategory: "", brands: [], minPrice: undefined, maxPrice: undefined, availableOnly: false, outletOnly: false, sort: "relevance", page: 1 });
   });
   it("normaliza valores inválidos", () => {
     const f = parse("page=-3&minPrice=abc&maxPrice=-5&sort=xyz");
@@ -71,5 +71,13 @@ describe("hallazgos de la revisión", () => {
   it("el match del admin no filtra por activo", () => {
     expect(buildAdminMatch("heladera")).toEqual({ $and: [{ searchText: { $regex: "heladera" } }] });
     expect(buildAdminMatch("")).toEqual({});
+  });
+
+  it("outlet: se lee de la URL, vuelve a la URL y filtra", () => {
+    const f = parse("outlet=1");
+    expect(f.outletOnly).toBe(true);
+    expect(serializeFilters(f).get("outlet")).toBe("1");
+    expect(buildMatch(f).outlet).toBe(true);
+    expect(buildMatch(parse("")).outlet).toBeUndefined();
   });
 });

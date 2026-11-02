@@ -7,7 +7,7 @@ import type { CatalogResult } from "@/lib/catalog-query";
 import { CatalogFiltersPanel } from "./catalog-filters-panel";
 import { ProductCard } from "./product-card";
 
-const SORT_LABELS: Record<SortKey, string> = { relevance: "Más relevantes", price_asc: "Menor precio", price_desc: "Mayor precio", newest: "Más nuevos" };
+const SORT_OPTIONS: { key: SortKey; label: string }[] = [{ key: "relevance", label: "Sin ordenar" }, { key: "price_asc", label: "Menor precio" }, { key: "price_desc", label: "Mayor precio" }];
 const pesos = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
 
 export function Catalog() {
@@ -64,8 +64,8 @@ export function Catalog() {
           <div className="catalog-summary">{result ? <span><strong>{result.total}</strong> producto{result.total === 1 ? "" : "s"}</span> : null}</div>
         </div>
         <label className="catalog-sort">Ordenar por
-          <select value={filters.sort} onChange={(e) => update({ sort: e.target.value as SortKey })}>
-            {(Object.keys(SORT_LABELS) as SortKey[]).map((key) => <option key={key} value={key}>{SORT_LABELS[key]}</option>)}
+          <select value={SORT_OPTIONS.some((o) => o.key === filters.sort) ? filters.sort : "relevance"} onChange={(e) => update({ sort: e.target.value as SortKey })}>
+            {SORT_OPTIONS.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
           </select>
         </label>
       </div>

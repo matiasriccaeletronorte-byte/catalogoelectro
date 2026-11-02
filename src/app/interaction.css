@@ -191,3 +191,8 @@ header.header-red :focus-visible{outline-color:#fff}
 }
 html{scroll-behavior:smooth}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+/* Header: que el menú no pise el buscador ni parta los botones en dos líneas */
+header nav a,header nav .cart-trigger{white-space:nowrap}
+header .header-search{min-width:0}
+header .header-search-input{min-width:0;flex:1}

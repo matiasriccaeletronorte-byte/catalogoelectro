@@ -36,7 +36,7 @@ header{
   min-height:84px;
   padding:12px max(4vw,20px);
   display:grid;
-  grid-template-columns:auto minmax(320px,1fr) auto;
+  grid-template-columns:auto minmax(200px,1fr) auto;
   gap:18px;
   align-items:center;
   background:rgba(255,255,255,.96);
@@ -46,7 +46,7 @@ header{
   z-index:30;
 }
 @media (min-width:1181px){
-  header{grid-template-columns:minmax(0,1fr) minmax(420px,650px) minmax(0,1fr)}
+  header{grid-template-columns:auto minmax(260px,1fr) auto;gap:20px}
   header .header-search{width:100%;justify-self:center}
   header .brand{justify-self:start}
   header>nav{justify-self:end}
@@ -262,12 +262,13 @@ nav a:hover{background:rgba(227,6,47,.08)}
   gap:14px;
 }
 .hero-carousel-wide{
-  min-height:300px;
+  min-height:clamp(320px,34vw,480px);
   align-content:space-between;
 }
 .hero-carousel-media{
   width:100%;
-  aspect-ratio:10 / 3;
+  aspect-ratio:8 / 3;
+  max-height:70vh;
   height:auto;
   overflow:hidden;
   margin:0 calc(-1 * var(--gutter));
@@ -325,8 +326,8 @@ nav a:hover{background:rgba(227,6,47,.08)}
 .hero-feature-grid strong{display:block;margin-bottom:6px;font-size:14px}
 .hero-feature-grid p{margin:0;color:var(--muted);font-size:12px;line-height:1.6}
 .hero-carousel-top,.hero-carousel-footer{display:flex;justify-content:space-between;gap:12px;align-items:center}
-.hero-carousel h2{margin:0;font-size:28px;line-height:1.05;letter-spacing:-1.5px;max-width:12ch}
-.hero-carousel p{margin:0;color:var(--muted);font-size:14px;line-height:1.65}
+.hero-carousel h2{margin:0;font-size:clamp(28px,3.4vw,46px);line-height:1.05;letter-spacing:-1.5px;max-width:18ch}
+.hero-carousel p{margin:0;color:var(--muted);font-size:clamp(14px,1.3vw,18px);line-height:1.65}
 .hero-carousel-controls{display:flex;gap:8px}
 .hero-carousel-controls button{width:10px;height:10px;padding:0;border-radius:50%;background:#d5d8dd}
 .hero-carousel-controls button.active{background:var(--brand)}
@@ -553,7 +554,8 @@ footer{padding:24px max(4vw,20px);color:var(--muted);font:11px "DM Mono";text-tr
   header{grid-template-columns:auto minmax(260px,1fr) auto;gap:10px;padding-left:20px;padding-right:20px}
   .brand img{height:42px}.brand small{display:none}nav{gap:4px}nav a{padding-left:9px;padding-right:9px}
   .hero-carousel{--gutter:16px}
-  .promo-strip,.promo-hero,.offers,.catalog,.locations,.promo-bank-strip{padding-left:16px;padding-right:16px}
+  .hero-carousel-media{aspect-ratio:4 / 3}
+  .promo-strip,.offers,.catalog,.locations,.promo-bank-strip{padding-left:16px;padding-right:16px}
   .promo-strip{grid-template-columns:1fr}
   .hero,.catalog,.locations{grid-template-columns:1fr}
   .offers-grid{grid-template-columns:1fr 1fr}

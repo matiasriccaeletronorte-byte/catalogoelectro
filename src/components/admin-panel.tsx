@@ -291,7 +291,7 @@ export function AdminPanel() {
                         </label>
                         {slide.image ? <button type="button" onClick={() => updateSlide(index, "image", "")}>Quitar imagen</button> : null}
                       </div>
-                      <small>La imagen se sube a la tienda (JPG, PNG o WebP, hasta 4 MB). Mejor en formato horizontal, por ejemplo 1920 × 576.</small>
+                      <small>La imagen se sube a la tienda (JPG, PNG o WebP, hasta 4 MB). Mejor en formato horizontal, por ejemplo 1920 × 720.</small>
                       <button type="button" onClick={() => removeSlide(index)}>Eliminar slide</button>
                     </article>
                   ))}

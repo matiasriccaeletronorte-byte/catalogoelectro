@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { shrinkImage } from "@/lib/client-image";
 import { normalizeImageUrl } from "@/lib/image-url";
 import type { Product } from "@/lib/types";
+import { CouponsTab } from "@/components/admin/coupons-tab";
 import { BrandsTab, type BrandRow } from "@/components/admin/brands-tab";
 import { ProductsTab } from "./admin/products-tab";
 import { ImportTab } from "./admin/import-tab";
@@ -19,7 +20,7 @@ type HomepageSettings = {
   bankPromotions: { title: string; description: string; note: string }[];
 };
 
-type Tab = "products" | "import" | "settings" | "home" | "categories" | "brands";
+type Tab = "products" | "import" | "settings" | "home" | "categories" | "brands" | "coupons";
 type FeaturedKey = "bestSellerIds" | "offerIds";
 
 const emptySlide = { tag: "", title: "", text: "", image: "" };
@@ -268,9 +269,9 @@ export function AdminPanel() {
     <main className="admin admin-layout">
       <aside className="admin-nav">
         <b>VENTAS</b>
-        {(["products", "import", "settings", "home", "categories", "brands"] as Tab[]).map((item) => (
+        {(["products", "import", "settings", "home", "categories", "brands", "coupons"] as Tab[]).map((item) => (
           <button onClick={() => setTab(item)} className={tab === item ? "selected" : ""} key={item}>
-            {({ products: "Productos", import: "Importar / Exportar", settings: "WhatsApp y promos", home: "Home", categories: "Categorías", brands: "Marcas" })[item]}
+            {({ products: "Productos", import: "Importar / Exportar", settings: "WhatsApp y promos", home: "Home", categories: "Categorías", brands: "Marcas", coupons: "Cupones" })[item]}
           </button>
         ))}
         <button
@@ -363,6 +364,8 @@ export function AdminPanel() {
         {tab === "products" && <ProductsTab categories={categories} subCategories={subTree} brands={brands.map((b) => b.name)} />}
         {tab === "import" && <ImportTab />}
         {tab === "settings" && <SettingsTab />}
+
+        {tab === "coupons" && <CouponsTab />}
 
         {tab === "brands" && <BrandsTab brands={brands} onChange={() => void load()} />}
 

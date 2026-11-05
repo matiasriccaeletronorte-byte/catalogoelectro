@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
-import { buildCartMessage, buildCartUrl, cartTotals } from "@/lib/cart";
+import { FormEvent, useEffect } from "react";
+import { buildCartMessage, buildCartUrl, cartTotals, totalsWithCoupon } from "@/lib/cart";
+import { describeCoupon } from "@/lib/coupons";
 import { normalizeImageUrl } from "@/lib/image-url";
 import { useCart } from "./cart-provider";
 import { useSiteSettings } from "./site-settings-provider";
@@ -9,7 +10,7 @@ import { useSiteSettings } from "./site-settings-provider";
 const money = (value: number) => `$${Math.round(value).toLocaleString("es-AR")}`;
 
 export function CartDrawer() {
-  const { lines, products, loading, open, setOpen, changeQty, remove, clear } = useCart();
+  const { lines, products, loading, open, setOpen, changeQty, remove, clear, coupon, couponError, applyCoupon, removeCoupon } = useCart();
   const { whatsappPhone } = useSiteSettings();
 
   useEffect(() => {
@@ -21,8 +22,16 @@ export function CartDrawer() {
 
   if (!open) return null;
   const visible = lines.filter((line) => products.has(line.id));
-  const totals = cartTotals(visible, products);
-  const href = visible.length ? buildCartUrl(whatsappPhone, buildCartMessage(visible, products, window.location.origin)) : "";
+  const subtotal = cartTotals(visible, products);
+  const totals = totalsWithCoupon(subtotal, coupon);
+  const href = visible.length ? buildCartUrl(whatsappPhone, buildCartMessage(visible, products, window.location.origin, coupon)) : "";
+  const hasDiscount = totals.cashDiscount > 0 || totals.listDiscount > 0;
+
+  function submitCoupon(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const input = event.currentTarget.elements.namedItem("coupon") as HTMLInputElement;
+    void applyCoupon(input.value);
+  }
 
   return <div className="cart-overlay" onClick={() => setOpen(false)}>
     <aside className="cart-drawer" role="dialog" aria-label="Tu pedido" onClick={(event) => event.stopPropagation()}>
@@ -50,6 +59,18 @@ export function CartDrawer() {
         })}
       </div>
       {visible.length > 0 ? <footer className="cart-foot">
+        {coupon ? <div className="cart-coupon applied">
+          <span><b>Cupón {coupon.code}</b><small>{hasDiscount ? describeCoupon(coupon) : `Se aplica ${describeCoupon(coupon).split("en compras ")[1] ?? "en compras mayores"}`}</small></span>
+          <button type="button" onClick={removeCoupon}>Quitar</button>
+        </div> : <form className="cart-coupon" onSubmit={submitCoupon}>
+          <input name="coupon" placeholder="¿Tenés un cupón de descuento?" autoComplete="off" maxLength={24} aria-label="Código de cupón" />
+          <button>Aplicar</button>
+        </form>}
+        {couponError && !coupon ? <small className="cart-coupon-error" role="alert">{couponError}</small> : null}
+        {hasDiscount ? <>
+          <div className="cart-total discount"><span>Descuento en efectivo</span><b>−{money(totals.cashDiscount)}</b></div>
+          <div className="cart-total discount"><span>Descuento de contado</span><b>−{money(totals.listDiscount)}</b></div>
+        </> : null}
         <div className="cart-total"><span>Total en efectivo</span><b>{money(totals.cash)}</b></div>
         <div className="cart-total"><span>Total de contado</span><b>{money(totals.list)}</b></div>
         <small>Precios sujetos a confirmación por WhatsApp.</small>

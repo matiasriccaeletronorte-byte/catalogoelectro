@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addLine, buildCartMessage, buildCartUrl, cartCount, cartTotals, MAX_CART_LINES, parseStoredCart, removeLine, setQty } from "./cart";
+import { addLine, buildCartMessage, buildCartUrl, cartCount, cartTotals, MAX_CART_LINES, parseStoredCart, removeLine, setQty, totalsWithCoupon } from "./cart";
 import type { Product } from "./types";
 
 const p = (id: string, cash: number, list: number): Product => ({ id, sku: `S-${id}`, name: `Art ${id}`, description: "", cashPrice: cash, listPrice: list, available: true, category: "c", outlet: false, image: "" });
@@ -40,5 +40,17 @@ describe("cart", () => {
   it("sin teléfono no arma link", () => {
     expect(buildCartUrl("", "x")).toBe("");
     expect(buildCartUrl("+54 9 11 5456-0043", "a b")).toBe("https://wa.me/5491154560043?text=a%20b");
+  });
+  it("aplica el cupón a cada total y lo muestra en el mensaje", () => {
+    const products = new Map([["a", p("a", 1000, 1200)]]);
+    const coupon = { code: "VERANO10", type: "percent" as const, value: 10, minTotal: 0 };
+    expect(totalsWithCoupon({ cash: 1000, list: 1200 }, coupon)).toEqual({ cash: 900, list: 1080, cashDiscount: 100, listDiscount: 120 });
+    const msg = buildCartMessage([{ id: "a", qty: 1 }], products, "https://x.com", coupon);
+    expect(msg).toContain("Cupón VERANO10");
+    expect(msg).toContain("Total en efectivo: $900");
+    expect(msg).toContain("Total de contado: $1.080");
+  });
+  it("sin cupón los totales no cambian", () => {
+    expect(totalsWithCoupon({ cash: 500, list: 600 }, null)).toEqual({ cash: 500, list: 600, cashDiscount: 0, listDiscount: 0 });
   });
 });

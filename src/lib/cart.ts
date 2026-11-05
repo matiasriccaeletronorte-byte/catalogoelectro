@@ -1,3 +1,4 @@
+import { discountFor, type PublicCoupon } from "./coupons";
 import type { Product } from "./types";
 
 export type CartLine = { id: string; qty: number };
@@ -50,20 +51,29 @@ export function cartTotals(lines: CartLine[], products: Map<string, Product>) {
   return { cash, list };
 }
 
+/** Totales con el cupón aplicado: el descuento se calcula sobre cada total por separado. */
+export function totalsWithCoupon(totals: { cash: number; list: number }, coupon: PublicCoupon | null) {
+  const cashDiscount = coupon ? discountFor(coupon, totals.cash) : 0;
+  const listDiscount = coupon ? discountFor(coupon, totals.list) : 0;
+  return { cash: totals.cash - cashDiscount, list: totals.list - listDiscount, cashDiscount, listDiscount };
+}
+
 const money = (value: number) => `$${Math.round(value).toLocaleString("es-AR")}`;
 
-export function buildCartMessage(lines: CartLine[], products: Map<string, Product>, origin: string): string {
+export function buildCartMessage(lines: CartLine[], products: Map<string, Product>, origin: string, coupon: PublicCoupon | null = null): string {
   const rows = lines.filter((line) => products.has(line.id)).map((line) => {
     const p = products.get(line.id)!;
     const sku = p.sku ? ` (código ${p.sku})` : "";
     return `• ${line.qty} x ${p.name}${sku}\n  Efectivo ${money(p.cashPrice)} · Contado ${money(p.listPrice)} c/u\n  ${origin}/productos/${p.id}`;
   });
-  const totals = cartTotals(lines, products);
+  const totals = totalsWithCoupon(cartTotals(lines, products), coupon);
+  const hasDiscount = totals.cashDiscount > 0 || totals.listDiscount > 0;
   return [
     "Hola, quiero consultar por este pedido:",
     "",
     ...rows,
     "",
+    ...(coupon && hasDiscount ? [`Cupón ${coupon.code}: -${money(totals.cashDiscount)} en efectivo · -${money(totals.listDiscount)} de contado`] : []),
     `Total en efectivo: ${money(totals.cash)}`,
     `Total de contado: ${money(totals.list)}`,
     "Precios sujetos a confirmación."

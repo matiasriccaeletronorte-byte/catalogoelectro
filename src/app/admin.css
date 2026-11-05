@@ -160,3 +160,7 @@
 .category-node-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.category-node-head h3{margin:0 auto 0 0}
 .row-action{padding:6px 10px;font-size:12px;background:#4a4543;color:#fff;border-radius:6px}.row-action.danger{background:#fff;color:#c72a2a;border:1px solid #c72a2a}
 .brand-list{display:grid;gap:8px;margin-top:16px}.brand-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;background:#fff;border:1px solid var(--line);border-radius:8px}.brand-row b{margin-right:auto}.brand-row span{color:var(--muted);font-size:13px}
+.coupon-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin:14px 0}
+.coupon-form input,.coupon-form select{padding:10px;border:1px solid var(--line);border-radius:7px;font:inherit;background:#fff}
+.coupon-date{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}.coupon-date input{flex:1;min-width:0}
+.coupon-list{display:grid;gap:8px;margin-top:12px}.coupon-off{opacity:.55}.coupon-error{color:#c72a2a}

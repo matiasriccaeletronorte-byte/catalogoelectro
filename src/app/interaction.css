@@ -235,3 +235,4 @@ header .header-search-input{min-width:0;flex:1}
 .cart-coupon.applied button{background:none;color:var(--muted);text-decoration:underline;font-weight:600;padding:4px}
 .cart-coupon-error{color:#c72a2a!important}
 .cart-total.discount{font-size:13px;color:#157a3d}.cart-total.discount b{font-size:13px;color:#157a3d!important;text-align:right}
+.cart-coupon-note{color:var(--muted);font-size:12px}.cart-line-nocoupon{color:var(--muted);font-size:11px;font-style:italic}

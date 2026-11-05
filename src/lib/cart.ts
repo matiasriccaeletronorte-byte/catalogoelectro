@@ -51,10 +51,18 @@ export function cartTotals(lines: CartLine[], products: Map<string, Product>) {
   return { cash, list };
 }
 
-/** Totales con el cupón aplicado: el descuento se calcula sobre cada total por separado. */
-export function totalsWithCoupon(totals: { cash: number; list: number }, coupon: PublicCoupon | null) {
-  const cashDiscount = coupon ? discountFor(coupon, totals.cash) : 0;
-  const listDiscount = coupon ? discountFor(coupon, totals.list) : 0;
+/** El cupón no vale para artículos que ya tienen el precio en efectivo más bajo que el de contado. */
+export const acceptsCoupon = (product: Pick<Product, "cashPrice" | "listPrice">): boolean => product.cashPrice >= product.listPrice;
+
+/** Totales de los artículos que sí participan del cupón. */
+export function couponBaseTotals(lines: CartLine[], products: Map<string, Product>) {
+  return cartTotals(lines.filter((line) => { const product = products.get(line.id); return !!product && acceptsCoupon(product); }), products);
+}
+
+/** Totales con el cupón aplicado: el descuento se calcula sobre cada total por separado, solo sobre `base` (los artículos que participan). */
+export function totalsWithCoupon(totals: { cash: number; list: number }, coupon: PublicCoupon | null, base: { cash: number; list: number } = totals) {
+  const cashDiscount = coupon ? discountFor(coupon, base.cash) : 0;
+  const listDiscount = coupon ? discountFor(coupon, base.list) : 0;
   return { cash: totals.cash - cashDiscount, list: totals.list - listDiscount, cashDiscount, listDiscount };
 }
 
@@ -66,14 +74,14 @@ export function buildCartMessage(lines: CartLine[], products: Map<string, Produc
     const sku = p.sku ? ` (código ${p.sku})` : "";
     return `• ${line.qty} x ${p.name}${sku}\n  Efectivo ${money(p.cashPrice)} · Contado ${money(p.listPrice)} c/u\n  ${origin}/productos/${p.id}`;
   });
-  const totals = totalsWithCoupon(cartTotals(lines, products), coupon);
+  const totals = totalsWithCoupon(cartTotals(lines, products), coupon, couponBaseTotals(lines, products));
   const hasDiscount = totals.cashDiscount > 0 || totals.listDiscount > 0;
   return [
     "Hola, quiero consultar por este pedido:",
     "",
     ...rows,
     "",
-    ...(coupon && hasDiscount ? [`Cupón ${coupon.code}: -${money(totals.cashDiscount)} en efectivo · -${money(totals.listDiscount)} de contado`] : []),
+    ...(coupon && hasDiscount ? [`Cupón ${coupon.code}: -${money(totals.cashDiscount)} en efectivo · -${money(totals.listDiscount)} de contado (no aplica a artículos con precio en efectivo menor al de contado)`] : []),
     `Total en efectivo: ${money(totals.cash)}`,
     `Total de contado: ${money(totals.list)}`,
     "Precios sujetos a confirmación."

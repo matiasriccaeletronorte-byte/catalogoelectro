@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect } from "react";
-import { buildCartMessage, buildCartUrl, cartTotals, totalsWithCoupon } from "@/lib/cart";
+import { acceptsCoupon, buildCartMessage, buildCartUrl, cartTotals, couponBaseTotals, totalsWithCoupon } from "@/lib/cart";
 import { describeCoupon } from "@/lib/coupons";
 import { normalizeImageUrl } from "@/lib/image-url";
 import { useCart } from "./cart-provider";
@@ -23,7 +23,8 @@ export function CartDrawer() {
   if (!open) return null;
   const visible = lines.filter((line) => products.has(line.id));
   const subtotal = cartTotals(visible, products);
-  const totals = totalsWithCoupon(subtotal, coupon);
+  const totals = totalsWithCoupon(subtotal, coupon, couponBaseTotals(visible, products));
+  const excluded = visible.filter((line) => !acceptsCoupon(products.get(line.id)!)).length;
   const href = visible.length ? buildCartUrl(whatsappPhone, buildCartMessage(visible, products, window.location.origin, coupon)) : "";
   const hasDiscount = totals.cashDiscount > 0 || totals.listDiscount > 0;
 
@@ -48,6 +49,7 @@ export function CartDrawer() {
               <b>{product.name}</b>
               {product.sku ? <small>SKU {product.sku}</small> : null}
               <span>Efectivo {money(product.cashPrice)} · Contado {money(product.listPrice)}</span>
+              {coupon && !acceptsCoupon(product) ? <small className="cart-line-nocoupon">Sin cupón</small> : null}
               <div className="cart-qty">
                 <button type="button" onClick={() => changeQty(line.id, line.qty - 1)} aria-label="Quitar uno">−</button>
                 <span>{line.qty}</span>
@@ -66,6 +68,7 @@ export function CartDrawer() {
           <input name="coupon" placeholder="¿Tenés un cupón de descuento?" autoComplete="off" maxLength={24} aria-label="Código de cupón" />
           <button>Aplicar</button>
         </form>}
+        {coupon && excluded > 0 ? <small className="cart-coupon-note">{hasDiscount ? "" : "El cupón no descuenta nada: "}{excluded === 1 ? "1 artículo tiene precio en efectivo menor al de contado y no participa del cupón." : `${excluded} artículos tienen precio en efectivo menor al de contado y no participan del cupón.`}</small> : null}
         {couponError && !coupon ? <small className="cart-coupon-error" role="alert">{couponError}</small> : null}
         {hasDiscount ? <>
           <div className="cart-total discount"><span>Descuento en efectivo</span><b>−{money(totals.cashDiscount)}</b></div>

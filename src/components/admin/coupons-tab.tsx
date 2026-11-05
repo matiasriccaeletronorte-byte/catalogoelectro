@@ -43,7 +43,7 @@ export function CouponsTab() {
     <>
       <p>VENTAS</p>
       <h1>Cupones de descuento</h1>
-      <small>El cliente escribe el código en “Tu pedido” y el descuento se aplica a los dos totales (efectivo y contado). Va en el mensaje de WhatsApp para que lo confirmes.</small>
+      <small>El cliente escribe el código en “Tu pedido” y el descuento se aplica a los dos totales (efectivo y contado). No se aplica a los artículos cuyo precio en efectivo es menor al de contado. Va en el mensaje de WhatsApp para que lo confirmes.</small>
       <form className="coupon-form" onSubmit={add}>
         <input name="code" placeholder="Código (ej. VERANO10)" required maxLength={24} />
         <select value={type} onChange={(event) => setType(event.target.value as "percent" | "fixed")} aria-label="Tipo de descuento">

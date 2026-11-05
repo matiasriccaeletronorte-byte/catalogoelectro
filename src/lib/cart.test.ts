@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addLine, buildCartMessage, buildCartUrl, cartCount, cartTotals, MAX_CART_LINES, parseStoredCart, removeLine, setQty, totalsWithCoupon } from "./cart";
+import { addLine, buildCartMessage, buildCartUrl, cartCount, cartTotals, MAX_CART_LINES, parseStoredCart, removeLine, setQty, totalsWithCoupon, acceptsCoupon, couponBaseTotals } from "./cart";
 import type { Product } from "./types";
 
 const p = (id: string, cash: number, list: number): Product => ({ id, sku: `S-${id}`, name: `Art ${id}`, description: "", cashPrice: cash, listPrice: list, available: true, category: "c", outlet: false, image: "" });
@@ -42,15 +42,31 @@ describe("cart", () => {
     expect(buildCartUrl("+54 9 11 5456-0043", "a b")).toBe("https://wa.me/5491154560043?text=a%20b");
   });
   it("aplica el cupón a cada total y lo muestra en el mensaje", () => {
-    const products = new Map([["a", p("a", 1000, 1200)]]);
+    const products = new Map([["a", p("a", 1000, 1000)]]);
     const coupon = { code: "VERANO10", type: "percent" as const, value: 10, minTotal: 0 };
     expect(totalsWithCoupon({ cash: 1000, list: 1200 }, coupon)).toEqual({ cash: 900, list: 1080, cashDiscount: 100, listDiscount: 120 });
     const msg = buildCartMessage([{ id: "a", qty: 1 }], products, "https://x.com", coupon);
     expect(msg).toContain("Cupón VERANO10");
     expect(msg).toContain("Total en efectivo: $900");
-    expect(msg).toContain("Total de contado: $1.080");
+    expect(msg).toContain("Total de contado: $900");
   });
   it("sin cupón los totales no cambian", () => {
     expect(totalsWithCoupon({ cash: 500, list: 600 }, null)).toEqual({ cash: 500, list: 600, cashDiscount: 0, listDiscount: 0 });
+  });
+  it("el cupón no aplica a artículos con efectivo menor al contado", () => {
+    const products = new Map([["a", p("a", 1000, 1200)], ["b", p("b", 500, 500)]]);
+    const lines = [{ id: "a", qty: 1 }, { id: "b", qty: 2 }];
+    expect(acceptsCoupon(products.get("a")!)).toBe(false);
+    expect(acceptsCoupon(products.get("b")!)).toBe(true);
+    const base = couponBaseTotals(lines, products);
+    expect(base).toEqual({ cash: 1000, list: 1000 });
+    const coupon = { code: "X", type: "percent" as const, value: 10, minTotal: 0 };
+    expect(totalsWithCoupon(cartTotals(lines, products), coupon, base)).toEqual({ cash: 1900, list: 2100, cashDiscount: 100, listDiscount: 100 });
+  });
+  it("si ningún artículo participa, no hay descuento", () => {
+    const products = new Map([["a", p("a", 1000, 1200)]]);
+    const lines = [{ id: "a", qty: 1 }];
+    const coupon = { code: "X", type: "fixed" as const, value: 300, minTotal: 0 };
+    expect(totalsWithCoupon(cartTotals(lines, products), coupon, couponBaseTotals(lines, products))).toEqual({ cash: 1000, list: 1200, cashDiscount: 0, listDiscount: 0 });
   });
 });

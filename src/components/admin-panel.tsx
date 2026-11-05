@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { shrinkImage } from "@/lib/client-image";
 import { normalizeImageUrl } from "@/lib/image-url";
 import type { Product } from "@/lib/types";
+import { BrandsTab, type BrandRow } from "@/components/admin/brands-tab";
 import { ProductsTab } from "./admin/products-tab";
 import { ImportTab } from "./admin/import-tab";
 import { SettingsTab } from "./admin/settings-tab";
@@ -18,7 +19,7 @@ type HomepageSettings = {
   bankPromotions: { title: string; description: string; note: string }[];
 };
 
-type Tab = "products" | "import" | "settings" | "home" | "categories";
+type Tab = "products" | "import" | "settings" | "home" | "categories" | "brands";
 type FeaturedKey = "bestSellerIds" | "offerIds";
 
 const emptySlide = { tag: "", title: "", text: "", image: "" };
@@ -31,6 +32,7 @@ export function AdminPanel() {
   const [tab, setTab] = useState<Tab>("products");
   const [categories, setCategories] = useState<string[]>([]);
   const [subTree, setSubTree] = useState<Record<string, string[]>>({});
+  const [brands, setBrands] = useState<BrandRow[]>([]);
   const [message, setMessage] = useState("");
   const [homeSettings, setHomeSettings] = useState<HomepageSettings>({
     bestSellerIds: [],
@@ -45,15 +47,17 @@ export function AdminPanel() {
   const [pickerResults, setPickerResults] = useState<Record<FeaturedKey, Product[]>>({ bestSellerIds: [], offerIds: [] });
 
   const load = async () => {
-    const [categoryData, subData, homepageData] = await Promise.all([
+    const [categoryData, subData, brandData, homepageData] = await Promise.all([
       fetch("/api/admin/categories").then((r) => (r.ok ? r.json() : [])),
       fetch("/api/admin/subcategories").then((r) => (r.ok ? r.json() : {})),
+      fetch("/api/admin/brands").then((r) => (r.ok ? r.json() : [])),
       fetch("/api/admin/homepage").then((r) =>
         r.ok ? r.json() : { bestSellerIds: [], offerIds: [], offerTimers: [], heroImages: [], carouselSlides: [], bankPromotions: [] }
       )
     ]);
     setCategories(categoryData);
     setSubTree(subData);
+    setBrands(brandData);
     setHomeSettings({
       bestSellerIds: (homepageData.bestSellerIds ?? []).slice(0, 3),
       offerIds: (homepageData.offerIds ?? []).slice(0, 3),
@@ -106,6 +110,23 @@ export function AdminPanel() {
     });
     if (!response.ok) return;
     form.reset();
+    void load();
+  }
+
+  async function renameCategory(name: string) {
+    const newName = window.prompt(`Nuevo nombre para la categoría "${name}":`, name)?.trim();
+    if (!newName || newName === name) return;
+    const response = await fetch("/api/admin/categories", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, newName }) });
+    if (!response.ok) return setMessage("No se pudo renombrar la categoría.");
+    setMessage("");
+    void load();
+  }
+
+  async function removeCategory(name: string) {
+    if (!window.confirm(`¿Eliminar la categoría "${name}"?`)) return;
+    const response = await fetch("/api/admin/categories", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) });
+    if (!response.ok) return setMessage((await response.json().catch(() => ({}))).error ?? "No se pudo eliminar la categoría.");
+    setMessage("");
     void load();
   }
 
@@ -247,9 +268,9 @@ export function AdminPanel() {
     <main className="admin admin-layout">
       <aside className="admin-nav">
         <b>VENTAS</b>
-        {(["products", "import", "settings", "home", "categories"] as Tab[]).map((item) => (
+        {(["products", "import", "settings", "home", "categories", "brands"] as Tab[]).map((item) => (
           <button onClick={() => setTab(item)} className={tab === item ? "selected" : ""} key={item}>
-            {({ products: "Productos", import: "Importar / Exportar", settings: "WhatsApp y promos", home: "Home", categories: "Categorías" })[item]}
+            {({ products: "Productos", import: "Importar / Exportar", settings: "WhatsApp y promos", home: "Home", categories: "Categorías", brands: "Marcas" })[item]}
           </button>
         ))}
         <button
@@ -339,9 +360,11 @@ export function AdminPanel() {
           </>
         )}
 
-        {tab === "products" && <ProductsTab categories={categories} subCategories={subTree} />}
+        {tab === "products" && <ProductsTab categories={categories} subCategories={subTree} brands={brands.map((b) => b.name)} />}
         {tab === "import" && <ImportTab />}
         {tab === "settings" && <SettingsTab />}
+
+        {tab === "brands" && <BrandsTab brands={brands} onChange={() => void load()} />}
 
         {tab === "categories" && (
           <>
@@ -354,7 +377,11 @@ export function AdminPanel() {
             <small>Creá la categoría y después sumale sus subcategorías. Al cargar un artículo las elegís de la lista.</small>
             <div className="category-tree">
               {categories.map((category) => <section key={category} className="category-node">
-                <h3>{category}</h3>
+                <div className="category-node-head">
+                  <h3>{category}</h3>
+                  <button type="button" className="row-action" onClick={() => void renameCategory(category)}>Renombrar</button>
+                  <button type="button" className="row-action danger" onClick={() => void removeCategory(category)}>Eliminar</button>
+                </div>
                 <div className="category-list">
                   {(subTree[category] ?? []).map((sub) => <span key={sub}>{sub} <button type="button" aria-label={`Quitar ${sub}`} onClick={() => void removeSubCategory(category, sub)}>✕</button></span>)}
                   {(subTree[category] ?? []).length === 0 ? <small>Sin subcategorías</small> : null}

@@ -178,7 +178,6 @@ export function HomePage({ shelves, categoryTiles }: { shelves: HomeShelves; cat
         <div className={`hero-carousel hero-carousel-wide${currentSlideImage ? " has-image" : ""}`}>
           {currentSlideImage ? (
             <div className="hero-carousel-media carousel-enter" key={`image-${slide}`}>
-              <img className="hero-backdrop" src={currentSlideImage} alt="" aria-hidden="true" />
               <img className="hero-main" src={currentSlideImage} alt={currentSlide.title} />
             </div>
           ) : null}

@@ -2,7 +2,8 @@ import { model, models, Schema } from "mongoose";
 
 const adminSessionSchema = new Schema({
   tokenHash: { type: String, required: true, unique: true, index: true },
-  expiresAt: { type: Date, required: true, index: { expires: 0 } }
+  expiresAt: { type: Date, required: true, index: { expires: 0 } },
+  lastSeenAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 
 export const AdminSessionModel = models.AdminSession || model("AdminSession", adminSessionSchema);

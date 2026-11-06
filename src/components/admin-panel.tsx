@@ -83,6 +83,41 @@ export function AdminPanel() {
       });
   }, []);
 
+  // cierre por inactividad: 30 min sin tocar nada. Mientras se trabaja, un aviso cada 5 min mantiene viva la sesión.
+  useEffect(() => {
+    if (!authenticated) return;
+    const IDLE_MS = 30 * 60 * 1000;
+    const PING_MS = 5 * 60 * 1000;
+    let lastActivity = Date.now();
+    let lastPing = Date.now();
+    const touch = () => { lastActivity = Date.now(); };
+    const expire = (reason: string) => {
+      void fetch("/api/admin/session", { method: "DELETE" }).catch(() => undefined);
+      setAuthenticated(false);
+      setPassword("");
+      setLoginError(reason);
+    };
+    const ping = () => {
+      lastPing = Date.now();
+      fetch("/api/admin/session").then((r) => r.json()).then((data) => { if (!data.authenticated) expire("Tu sesión venció. Volvé a ingresar."); }).catch(() => undefined);
+    };
+    const check = () => {
+      const now = Date.now();
+      if (now - lastActivity >= IDLE_MS) return expire("Tu sesión se cerró por inactividad. Volvé a ingresar.");
+      if (now - lastPing >= PING_MS && now - lastActivity < PING_MS) ping();
+    };
+    const onVisible = () => { if (document.visibilityState === "visible") check(); };
+    const events = ["mousemove", "keydown", "click", "scroll", "touchstart"] as const;
+    events.forEach((name) => window.addEventListener(name, touch, { passive: true }));
+    document.addEventListener("visibilitychange", onVisible);
+    const timer = setInterval(check, 15_000);
+    return () => {
+      clearInterval(timer);
+      events.forEach((name) => window.removeEventListener(name, touch));
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [authenticated]);
+
   async function login(event: FormEvent) {
     event.preventDefault();
     setLoginError("");

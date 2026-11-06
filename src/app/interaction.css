@@ -259,12 +259,6 @@ input[type="checkbox"],input[type="radio"]{accent-color:var(--brand)}
 .product-breadcrumb{justify-content:flex-start;padding:0}
 .retail-dup{display:none}
 @media(max-width:820px){.retail-dup{display:inline-flex}}
-/* carrusel sin foto: fondo de marca en lugar de una página casi vacía */
-.hero-carousel:not(:has(.hero-carousel-media)){background:linear-gradient(120deg,#c91d20,#E52627 60%,#f0494a);color:#fff;border-bottom:0}
-.hero-carousel:not(:has(.hero-carousel-media)) h2,.hero-carousel:not(:has(.hero-carousel-media)) p{color:#fff}
-.hero-carousel:not(:has(.hero-carousel-media)) .badge-soft{background:rgba(255,255,255,.18);color:#fff}
-.hero-carousel:not(:has(.hero-carousel-media)) .hero-carousel-controls button{background:rgba(255,255,255,.45)}
-.hero-carousel:not(:has(.hero-carousel-media)) .hero-carousel-controls button.active{background:#fff}
 /* encabezado del celular: logo y "Mi pedido" en una fila, búsqueda debajo */
 @media(max-width:620px){
   header{grid-template-columns:1fr auto;grid-template-areas:"brand nav" "search search";gap:10px 12px}
@@ -282,3 +276,40 @@ input[type="checkbox"],input[type="radio"]{accent-color:var(--brand)}
 .cart-foot,.cart-foot .cart-total span,.cart-foot small{font-family:inherit;text-transform:none;letter-spacing:0}
 .cart-foot small{font-size:12px}
 .login input{padding:12px 14px}
+
+/* Carrusel: todo adentro de la imagen, con flechas y unos 400 px de alto */
+.hero-carousel.hero-carousel-wide{position:relative;display:block;padding:0;min-height:0;height:clamp(200px,28vw,400px);overflow:hidden;background:#1f2328;border-bottom:0}
+.hero-carousel.hero-carousel-wide .hero-carousel-media{position:absolute;inset:0;width:100%;height:100%;max-height:none;aspect-ratio:auto;margin:0}
+.hero-carousel.hero-carousel-wide .hero-carousel-media img{position:absolute;inset:0;width:100%;height:100%}
+.hero-carousel-media .hero-main{object-fit:contain;object-position:center}
+.hero-carousel-media .hero-backdrop{object-fit:cover;filter:blur(28px) saturate(1.1);transform:scale(1.15)}
+.hero-carousel.hero-carousel-wide:not(.has-image){background:linear-gradient(120deg,#c91d20,#E52627 60%,#f0494a)}
+.hero-carousel-wide:not(.has-image) .hero-carousel-content{position:absolute;left:var(--gutter);right:var(--gutter);bottom:clamp(40px,6vw,64px)}
+.hero-carousel-wide:not(.has-image) .hero-carousel-content h2,.hero-carousel-wide:not(.has-image) .hero-carousel-content p{color:#fff}
+.hero-carousel-tag{position:absolute;top:18px;left:var(--gutter);background:rgba(255,255,255,.18);color:#fff}
+.hero-arrow{position:absolute;top:50%;z-index:3;width:44px;height:44px;padding:0 0 4px;transform:translateY(-50%);border-radius:50%;border:0;background:rgba(255,255,255,.92);color:var(--brand);font-size:28px;font-weight:700;line-height:1;display:grid;place-items:center;box-shadow:0 6px 18px rgba(0,0,0,.25);cursor:pointer}
+.hero-arrow:hover{background:#fff;transform:translateY(-50%) scale(1.06)}
+.hero-arrow.previous{left:14px}
+.hero-arrow.next{right:14px}
+.hero-carousel-wide .hero-carousel-controls{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:3;display:flex;gap:8px;padding:6px 10px;border-radius:999px;background:rgba(0,0,0,.35)}
+.hero-carousel-wide .hero-carousel-controls button{width:10px;height:10px;padding:0;border-radius:50%;background:rgba(255,255,255,.55);border:0}
+.hero-carousel-wide .hero-carousel-controls button.active{background:#fff;width:22px;border-radius:999px}
+@media(max-width:620px){.hero-arrow{width:36px;height:36px;font-size:22px}.hero-arrow.previous{left:8px}.hero-arrow.next{right:8px}}
+/* buscador del encabezado: el texto siempre centrado y dentro de la píldora */
+.header-search{min-height:46px;padding:0 6px 0 18px}
+.header-search-input{appearance:none;-webkit-appearance:none;margin:0;padding:0 4px;height:100%;min-height:34px;align-self:stretch;font:inherit;font-size:14px;line-height:normal}
+.header-search-input::-webkit-search-decoration,.header-search-input::-webkit-search-cancel-button{-webkit-appearance:none}
+
+/* Resultados en vivo del buscador */
+.header-search{position:relative}
+.search-suggestions{position:absolute;top:calc(100% + 8px);left:0;right:0;z-index:60;display:grid;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 16px 40px rgba(31,35,40,.22);overflow:hidden;max-height:min(70vh,520px);overflow-y:auto}
+.search-suggestions a{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;padding:10px 14px;color:var(--text);text-decoration:none;border-bottom:1px solid var(--line)}
+.search-suggestions a.active,.search-suggestions a:hover{background:#fff3f4}
+.suggest-thumb{width:44px;height:44px;border-radius:8px;background:#f3f4f6;display:grid;place-items:center;overflow:hidden}.suggest-thumb img{width:100%;height:100%;object-fit:contain}
+.suggest-text{display:grid;gap:2px;min-width:0;text-align:left}.suggest-text b{font-size:14px;font-weight:600;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.suggest-text small{font-size:12px;color:var(--muted)}
+.suggest-price{font-weight:800;font-size:14px;color:var(--brand);white-space:nowrap}
+.search-suggestions mark{background:#ffe3e4;color:#b3151a;border-radius:3px;padding:0 1px}
+.search-suggestions .search-all{display:block;text-align:center;border-bottom:0;font-weight:800;font-size:14px;color:var(--brand);padding:12px}
+.search-empty{margin:0;padding:16px;color:var(--muted);font-size:14px;text-align:left}
+.header-search-input:focus-visible{outline:none}
+.header-search:focus-within{box-shadow:0 0 0 3px rgba(255,255,255,.55)}

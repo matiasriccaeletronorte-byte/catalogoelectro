@@ -175,30 +175,34 @@ export function HomePage({ shelves, categoryTiles }: { shelves: HomeShelves; cat
       </section>
 
       <section className="promo-hero">
-        <div className="hero-carousel hero-carousel-wide">
-          <div className="hero-carousel-top">
-            <span className="badge-soft">{currentSlide.tag}</span>
-            <div className="hero-carousel-controls" aria-label="Cambiar slide">
+        <div className={`hero-carousel hero-carousel-wide${currentSlideImage ? " has-image" : ""}`}>
+          {currentSlideImage ? (
+            <div className="hero-carousel-media carousel-enter" key={`image-${slide}`}>
+              <img className="hero-backdrop" src={currentSlideImage} alt="" aria-hidden="true" />
+              <img className="hero-main" src={currentSlideImage} alt={currentSlide.title} />
+            </div>
+          ) : null}
+          {!currentSlideImage ? <span className="badge-soft hero-carousel-tag">{currentSlide.tag}</span> : null}
+          <div className={`hero-carousel-content carousel-enter${currentSlideImage ? " sr-only" : ""}`} key={`content-${slide}`}>
+            <h2>{currentSlide.title}</h2>
+            <p>{currentSlide.text}</p>
+          </div>
+          {carouselSlides.length > 1 ? <>
+            <button type="button" className="hero-arrow previous" onClick={() => setSlide((slide - 1 + carouselSlides.length) % carouselSlides.length)} aria-label="Slide anterior">‹</button>
+            <button type="button" className="hero-arrow next" onClick={() => setSlide((slide + 1) % carouselSlides.length)} aria-label="Slide siguiente">›</button>
+            <div className="hero-carousel-controls" role="group" aria-label="Elegir slide">
               {carouselSlides.map((item, index) => (
                 <button
                   key={`${item.tag}-${index}`}
                   type="button"
                   className={index === slide ? "active" : ""}
                   onClick={() => setSlide(index)}
-                  aria-label={item.tag}
+                  aria-label={`Ir al slide ${index + 1}${item.tag ? `: ${item.tag}` : ""}`}
+                  aria-current={index === slide}
                 />
               ))}
             </div>
-          </div>
-          {currentSlideImage ? (
-            <div className="hero-carousel-media carousel-enter" key={`image-${slide}`}>
-              <img src={currentSlideImage} alt={currentSlide.title} />
-            </div>
-          ) : null}
-          <div className="hero-carousel-content carousel-enter" key={`content-${slide}`}>
-            <h2>{currentSlide.title}</h2>
-            <p>{currentSlide.text}</p>
-          </div>
+          </> : null}
         </div>
       </section>
 

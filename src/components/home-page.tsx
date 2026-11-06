@@ -162,10 +162,10 @@ export function HomePage({ shelves, categoryTiles }: { shelves: HomeShelves; cat
           {offers.length > 0 ? <button className="retail-link" type="button" onClick={() => document.getElementById("ofertas")?.scrollIntoView({ behavior: "smooth" })}>
             Ofertas
           </button> : null}
-          <Link className="retail-link" href="/catalogo?outlet=1">
+          <Link className="retail-link retail-dup" href="/catalogo?outlet=1">
             Outlet
           </Link>
-          <Link className="retail-link" href="/promos-bancarias">
+          <Link className="retail-link retail-dup" href="/promos-bancarias">
             Promos bancarias
           </Link>
           <button className="retail-link" type="button" onClick={() => document.getElementById("sucursales")?.scrollIntoView({ behavior: "smooth" })}>
@@ -198,10 +198,6 @@ export function HomePage({ shelves, categoryTiles }: { shelves: HomeShelves; cat
           <div className="hero-carousel-content carousel-enter" key={`content-${slide}`}>
             <h2>{currentSlide.title}</h2>
             <p>{currentSlide.text}</p>
-          </div>
-          <div className="hero-carousel-footer">
-            <span>Campañas destacadas</span>
-            <span>Stock sujeto a disponibilidad</span>
           </div>
         </div>
       </section>
@@ -257,7 +253,6 @@ export function HomePage({ shelves, categoryTiles }: { shelves: HomeShelves; cat
       <section id="sucursales" className="locations">
         {branches.map((branch, index) => (
           <article className="location-card" key={`${branch.name}-${index}`}>
-            <p className="eyebrow">Sucursal</p>
             <h2>{branch.name}</h2>
             <div className="location-contact">
               <a
@@ -284,7 +279,6 @@ export function HomePage({ shelves, categoryTiles }: { shelves: HomeShelves; cat
         ))}
 
         <article className="location-card">
-          <p className="eyebrow">Servicio técnico</p>
           <h2>Postventa y asistencia</h2>
           <p className="location-copy">
             Si necesitás ayuda con instalación, garantía o revisiones técnicas, podés escribirnos por WhatsApp y te orientamos con la mejor opción.

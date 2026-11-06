@@ -123,8 +123,8 @@ header.header-dark .cart b{background:#fff;color:#E52627}
 .shelf-track::-webkit-scrollbar{display:none}
 .shelf-item{flex:0 0 calc((100% - 48px) / 4);min-width:220px;scroll-snap-align:start}
 .shelf-arrow{position:absolute;top:40%;z-index:2;width:42px;height:42px;padding:0 0 3px;border-radius:50%;border:2px solid var(--brand);background:#fff;color:var(--brand);box-shadow:0 6px 16px rgba(31,35,40,.18);font-size:26px;font-weight:700;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.shelf-arrow.previous{left:-14px}
-.shelf-arrow.next{right:-14px}
+.shelf-arrow.previous{left:-28px}
+.shelf-arrow.next{right:-28px}
 .shelf-arrow:hover{background:var(--brand);color:#fff}
 @media (max-width:860px){
   .shelf-item{flex-basis:70%}
@@ -236,3 +236,49 @@ header .header-search-input{min-width:0;flex:1}
 .cart-coupon-error{color:#c72a2a!important}
 .cart-total.discount{font-size:13px;color:#157a3d}.cart-total.discount b{font-size:13px;color:#157a3d!important;text-align:right}
 .cart-coupon-note{color:var(--muted);font-size:12px}.cart-line-nocoupon{color:var(--muted);font-size:11px;font-style:italic}
+
+/* Pulido de interfaz */
+.image-placeholder{display:grid;place-items:center;width:100%;height:100%;color:#b9bec6}
+.cart-thumb .image-placeholder svg{width:28px;height:28px}
+.strip-monogram{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;background:var(--brand-soft);color:var(--brand);font-size:30px;font-weight:800}
+.strip-track{justify-content:safe center}
+.category-strip:not(.scrolls) .strip-track{overflow-x:visible}
+.product-card h3 a{text-decoration:none;color:var(--text)}
+.product-card h3 a:hover{color:var(--brand);text-decoration:underline;text-underline-offset:3px}
+.badges em{font-family:inherit;font-size:12px;font-weight:600;letter-spacing:0;color:var(--muted)}
+.badges small{font-family:inherit;font-size:11px;font-weight:700;letter-spacing:.04em}
+.product-info .badges em{font-size:13px}
+.card-notes span{font-family:inherit;font-size:12px;font-weight:500;letter-spacing:0;border-radius:6px}
+.card-footer .stock{font-family:inherit;font-size:13px;font-weight:600;letter-spacing:0;color:var(--muted);display:inline-flex;align-items:center;gap:7px}
+.card-footer .stock::before{content:"";width:8px;height:8px;border-radius:50%;background:#c4c9d0}
+.card-footer .stock.in{color:#157a3d}.card-footer .stock.in::before{background:#1fa855}
+.eyebrow,.section-head p,.categories>p{font-family:inherit;letter-spacing:0;text-transform:none;font-size:13px;font-weight:700}
+.badge-soft{font-family:inherit;font-size:12px;font-weight:700;letter-spacing:0}
+.filters-panel h3,.catalog-filters h3,.filter-group>p{font-family:inherit}
+input[type="checkbox"],input[type="radio"]{accent-color:var(--brand)}
+.product-breadcrumb{justify-content:flex-start;padding:0}
+.retail-dup{display:none}
+@media(max-width:820px){.retail-dup{display:inline-flex}}
+/* carrusel sin foto: fondo de marca en lugar de una página casi vacía */
+.hero-carousel:not(:has(.hero-carousel-media)){background:linear-gradient(120deg,#c91d20,#E52627 60%,#f0494a);color:#fff;border-bottom:0}
+.hero-carousel:not(:has(.hero-carousel-media)) h2,.hero-carousel:not(:has(.hero-carousel-media)) p{color:#fff}
+.hero-carousel:not(:has(.hero-carousel-media)) .badge-soft{background:rgba(255,255,255,.18);color:#fff}
+.hero-carousel:not(:has(.hero-carousel-media)) .hero-carousel-controls button{background:rgba(255,255,255,.45)}
+.hero-carousel:not(:has(.hero-carousel-media)) .hero-carousel-controls button.active{background:#fff}
+/* encabezado del celular: logo y "Mi pedido" en una fila, búsqueda debajo */
+@media(max-width:620px){
+  header{grid-template-columns:1fr auto;grid-template-areas:"brand nav" "search search";gap:10px 12px}
+  .retail-nav-row{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .retail-nav-row::-webkit-scrollbar{display:none}
+  .retail-link{flex:none;white-space:nowrap}
+}
+/* el logo, el carrusel y el contenido arrancan en el mismo borde en pantallas anchas */
+@media(min-width:1081px){
+  :root{--page-gutter:max(max(4vw,20px),calc((100vw - 1280px) / 2 + max(4vw,20px)))}
+  header{padding-left:var(--page-gutter);padding-right:var(--page-gutter)}
+  .hero-carousel{--gutter:var(--page-gutter)}
+}
+.cart-qty button{display:inline-grid;place-items:center;padding:0;line-height:1}
+.cart-foot,.cart-foot .cart-total span,.cart-foot small{font-family:inherit;text-transform:none;letter-spacing:0}
+.cart-foot small{font-size:12px}
+.login input{padding:12px 14px}

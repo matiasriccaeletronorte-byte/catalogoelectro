@@ -5,7 +5,7 @@
 .admin-nav{position:sticky;top:108px;align-self:start;display:grid;gap:5px;border-right:1px solid #e5e2e1;padding-right:24px}
 .admin-nav>b{font:11px 'DM Mono';letter-spacing:1px;color:#e3062f;margin-bottom:14px}
 .admin-nav button{background:transparent;color:#514c4a;text-align:left;padding:10px;border-radius:0}
-.admin-nav button.selected{color:#e3062f;border-left:3px solid #e3062f;font-weight:800}
+.admin-nav button.selected{color:#e3062f;background:#fff1f3;font-weight:800}
 .admin-nav .signout{margin-top:24px;color:#9b2929}
 .admin-content>p{font:11px 'DM Mono';letter-spacing:1px;color:#e3062f}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}

@@ -61,7 +61,6 @@ export function Catalog() {
     <div className="catalog-content">
       <div className="catalog-toolbar">
         <div className="section-head">
-          <p>Catálogo</p>
           <h1>{filters.category || (filters.outletOnly ? "Outlet" : "Todos los productos")}</h1>
           <div className="catalog-summary">{result ? <span><strong>{result.total}</strong> producto{result.total === 1 ? "" : "s"}</span> : null}</div>
         </div>

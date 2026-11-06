@@ -17,7 +17,7 @@ export function ProductShelf({ eyebrow, title, href, items }: { eyebrow: string;
   };
   return <section className="offers product-shelf">
     <div className="section-head offers-head">
-      <div><p>{eyebrow}</p><h2>{title}</h2></div>
+      <div><h2>{title}</h2></div>
       <Link href={href} className="catalog-reset">Ver todos</Link>
     </div>
     <div className="shelf-wrap">

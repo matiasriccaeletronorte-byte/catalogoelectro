@@ -4,6 +4,7 @@ import { FormEvent, useEffect } from "react";
 import { acceptsCoupon, buildCartMessage, buildCartUrl, cartTotals, couponBaseTotals, totalsWithCoupon } from "@/lib/cart";
 import { describeCoupon } from "@/lib/coupons";
 import { normalizeImageUrl } from "@/lib/image-url";
+import { ImagePlaceholder } from "./image-placeholder";
 import { useCart } from "./cart-provider";
 import { useSiteSettings } from "./site-settings-provider";
 
@@ -44,7 +45,7 @@ export function CartDrawer() {
           const product = products.get(line.id)!;
           const image = normalizeImageUrl((product.images?.[0] ?? product.image) || "");
           return <div className="cart-line" key={line.id}>
-            <div className="cart-thumb">{/^https?:|^\//.test(image) ? <img src={image} alt="" loading="lazy" width={64} height={64} /> : <span>📦</span>}</div>
+            <div className="cart-thumb">{/^https?:|^\//.test(image) ? <img src={image} alt="" loading="lazy" width={64} height={64} /> : <ImagePlaceholder />}</div>
             <div className="cart-line-info">
               <b>{product.name}</b>
               {product.sku ? <small>SKU {product.sku}</small> : null}

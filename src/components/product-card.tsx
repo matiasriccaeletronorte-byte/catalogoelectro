@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Product } from "@/lib/types";
 import { normalizeImageUrl } from "@/lib/image-url";
+import { ImagePlaceholder } from "./image-placeholder";
 import { PriceBlock } from "./price-block";
 import { WhatsappButton } from "./whatsapp-button";
 import { AddToCartButton } from "./add-to-cart-button";
@@ -31,7 +32,7 @@ export function ProductCard({ product, offerEndsAt, currentTime = Date.now() }: 
   return <article className="product-card">
     <div className="product-image-wrap">
       <Link href={`/productos/${product.id}`} className="product-image" aria-label={`Ver ${product.name}`}>
-        {isImageUrl ? <img src={image} alt={product.name} loading="lazy" decoding="async" width={400} height={400} /> : <span>{image || "📦"}</span>}
+        {isImageUrl ? <img src={image} alt={product.name} loading="lazy" decoding="async" width={400} height={400} /> : image ? <span>{image}</span> : <ImagePlaceholder />}
       </Link>
       {images.length > 1 ? <>
         <button type="button" className="product-image-arrow previous" onClick={(event) => changeImage(event, -1)} aria-label="Imagen anterior">‹</button>
@@ -39,12 +40,12 @@ export function ProductCard({ product, offerEndsAt, currentTime = Date.now() }: 
       </> : null}
     </div>
     <div className="product-info">
-      <div className="badges">{product.outlet ? <small>OUTLET</small> : null}<em>{product.category}</em>{product.subCategory ? <em>{product.subCategory}</em> : null}{product.brand ? <em>{product.brand}</em> : null}</div>
+      <div className="badges">{product.outlet ? <small>OUTLET</small> : null}{product.brand ? <em>{product.brand}</em> : null}</div>
       {timer ? <div className="offer-card-timer"><span>Oferta expira en</span><b>{timer.days > 0 ? `${timer.days}d ` : ""}{String(timer.hours).padStart(2, "0")}:{String(timer.minutes).padStart(2, "0")}:{String(timer.seconds).padStart(2, "0")}</b></div> : null}
       <h3><Link href={`/productos/${product.id}`}>{product.name}</Link></h3>
       <p>{product.description}</p><PriceBlock product={product} />
       <div className="card-notes" aria-label="Características del producto">{features.length > 0 ? features.map((feature) => <span key={feature}>{feature}</span>) : <span>Consultá características y envío</span>}</div>
-      <div className="card-footer"><span>{product.available ? "Disponible" : "Consultar disponibilidad"}</span><AddToCartButton productId={product.id} className="add-cart-button small" /><WhatsappButton product={product} className="whatsapp-button small" /></div>
+      <div className="card-footer"><span className={product.available ? "stock in" : "stock"}>{product.available ? "Disponible" : "Consultar disponibilidad"}</span><AddToCartButton productId={product.id} className="add-cart-button small" /><WhatsappButton product={product} className="whatsapp-button small" /></div>
     </div>
   </article>;
 }

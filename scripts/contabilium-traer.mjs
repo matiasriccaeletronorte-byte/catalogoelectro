@@ -85,7 +85,9 @@ async function main() {
       fresh++;
     }
     console.log(`  página ${page}: ${items.length} artículos (${articles.length} en total)`);
-    const totalPages = body?.TotalPage ?? body?.totalPage;
+    // TotalPage de la API llega topado en 50; el total real sale de TotalItems
+    const totalItems = Number(body?.TotalItems ?? body?.totalItems ?? 0);
+    const totalPages = totalItems > 0 ? Math.ceil(totalItems / PAGE_SIZE) : (body?.TotalPage ?? body?.totalPage);
     if (items.length < PAGE_SIZE || fresh === 0 || (totalPages && page >= totalPages)) break;
     await sleep(PAUSE_MS);
   }

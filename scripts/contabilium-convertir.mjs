@@ -72,7 +72,7 @@ function cleanName(raw) {
     return " ";
   });
   if (/\bOUTLET\b/i.test(name)) { outlet = true; name = name.replace(/\bOUTLET\b\s*\(?\s*\)?/gi, " "); }
-  name = name.replace(/\s*-\s*$/, "").replace(/^(BAZAR|JUGUETE|MUEBLES)\s+/i, "").replace(/\s+BAZAR$/i, "").replace(/\s+/g, " ").trim();
+  name = name.replace(/\s*-\s*$/, "").replace(/^(BAZAR|JUGUETE|MUEBLES)\s+/i, "").replace(/\s+BAZAR$/i, "").replace(/[\s(,;:-]+$/, "").replace(/\s+/g, " ").trim();
   return { name, features, outlet };
 }
 

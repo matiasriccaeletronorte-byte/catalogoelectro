@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit --incremental false",
-    "test": "vitest run"
+    "test": "vitest run",
+    "contabilium:traer": "node scripts/contabilium-traer.mjs"
   },
   "dependencies": {
     "exceljs": "^4.4.0",

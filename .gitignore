@@ -6,3 +6,6 @@ node_modules/
 coverage/
 uploads/
 .superpowers/
+
+# Datos traídos de Contabilium (precios y costos del negocio: no se suben)
+datos-contabilium/

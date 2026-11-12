@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type Result = { mode: "preview" | "apply"; created: number; updated: number; errors: { rowNumber: number; message: string }[]; columns: string[] };
 
@@ -9,6 +9,23 @@ export function ImportTab() {
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [total, setTotal] = useState<number | null>(null);
+  const [word, setWord] = useState("");
+  const [purgeMessage, setPurgeMessage] = useState("");
+
+  const loadTotal = () => fetch("/api/admin/purge-products").then((r) => (r.ok ? r.json() : null)).then((d) => setTotal(d ? d.total : null)).catch(() => setTotal(null));
+  useEffect(() => { void loadTotal(); }, []);
+
+  async function purge() {
+    setBusy(true); setPurgeMessage("");
+    const response = await fetch("/api/admin/purge-products", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ confirm: word }) });
+    const body = await response.json().catch(() => ({}));
+    setBusy(false);
+    if (!response.ok) { setPurgeMessage(body.error ?? "No se pudo borrar."); return; }
+    setWord("");
+    setPurgeMessage(`Se borraron ${body.deleted} artículos.`);
+    void loadTotal();
+  }
 
   async function send(mode: "preview" | "apply") {
     if (!file) return;
@@ -40,5 +57,14 @@ export function ImportTab() {
       {result.errors.length > 0 ? <ul>{result.errors.slice(0, 200).map((e) => <li key={`${e.rowNumber}-${e.message}`}>Fila {e.rowNumber}: {e.message}</li>)}</ul> : null}
       {result.mode === "preview" && result.created + result.updated > 0 ? <button type="button" disabled={busy} onClick={() => send("apply")}>Confirmar e importar {result.created + result.updated} artículos</button> : null}
     </div> : null}
+    <section className="danger-zone">
+      <h2>Borrar todos los artículos</h2>
+      <p>Hay <strong>{total ?? "…"}</strong> artículos cargados. Esta acción los borra a todos y <strong>no se puede deshacer</strong>. No toca categorías, marcas, cupones ni los textos de la home. Si necesitás conservar los datos, antes descargá el catálogo en Excel.</p>
+      <label>Para confirmar, escribí <b>BORRAR</b>
+        <input value={word} onChange={(e) => setWord(e.target.value)} placeholder="BORRAR" autoComplete="off" />
+      </label>
+      <button type="button" className="danger" disabled={busy || word !== "BORRAR" || !total} onClick={() => void purge()}>Borrar los {total ?? ""} artículos</button>
+      {purgeMessage ? <p role="status">{purgeMessage}</p> : null}
+    </section>
   </div>;
 }

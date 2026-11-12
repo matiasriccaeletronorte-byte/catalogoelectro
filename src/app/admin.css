@@ -164,3 +164,10 @@
 .coupon-form input,.coupon-form select{padding:10px;border:1px solid var(--line);border-radius:7px;font:inherit;background:#fff}
 .coupon-date{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}.coupon-date input{flex:1;min-width:0}
 .coupon-list{display:grid;gap:8px;margin-top:12px}.coupon-off{opacity:.55}.coupon-error{color:#c72a2a}
+.danger-zone{margin-top:32px;padding:16px;border:1px solid #c72a2a;border-radius:10px;background:#fff7f7;display:grid;gap:10px}
+.danger-zone h2{margin:0;color:#b3151a;font-size:18px}.danger-zone p{margin:0;font-size:14px}
+.danger-zone input{padding:10px;border:1px solid #c72a2a;border-radius:7px;font:inherit;max-width:240px;display:block;margin-top:6px}
+.danger-zone button.danger{background:#c72a2a;color:#fff;justify-self:start}.danger-zone button.danger:disabled{opacity:.4;cursor:not-allowed}
+.product-form .danger-zone{grid-column:1 / -1;grid-template-columns:1fr;max-width:680px}
+.product-form .danger-zone{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.product-form .danger-zone>*{width:auto;max-width:100%}

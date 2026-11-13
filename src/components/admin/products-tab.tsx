@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { shrinkImage } from "@/lib/client-image";
 import { MAX_IMAGES_PER_PRODUCT, planUploads } from "@/lib/image-limits";
+import { cashFromDiscount, DiscountType, impliedDiscount } from "@/lib/cash-discount";
 import { normalizeImageUrl } from "@/lib/image-url";
 import { ImagePlaceholder } from "../image-placeholder";
 import type { Product } from "@/lib/types";
@@ -21,6 +22,8 @@ export function ProductsTab({ categories, subCategories = {}, brands = [] }: { c
   const [images, setImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState<{ done: number; total: number } | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [discountType, setDiscountType] = useState<DiscountType>("percent");
+  const [discountValue, setDiscountValue] = useState("");
   const [message, setMessage] = useState("");
 
   const load = useCallback(async () => {
@@ -37,6 +40,7 @@ export function ProductsTab({ categories, subCategories = {}, brands = [] }: { c
 
   function edit(product: AdminProduct) {
     setEditing(product.id);
+    setDiscountValue("");
     setImages(product.images ?? []);
     setForm({
       sku: product.sku ?? "", name: product.name, description: product.description, category: product.category,
@@ -47,7 +51,7 @@ export function ProductsTab({ categories, subCategories = {}, brands = [] }: { c
   }
 
   function reset() {
-    setEditing(null); setImages([]); setForm(emptyForm);
+    setEditing(null); setImages([]); setForm(emptyForm); setDiscountValue("");
   }
 
   async function save(event: FormEvent) {
@@ -111,6 +115,24 @@ export function ProductsTab({ categories, subCategories = {}, brands = [] }: { c
   }
 
   const set = (key: keyof typeof emptyForm, value: string | boolean) => setForm({ ...form, [key]: value });
+
+  // El precio en efectivo se puede cargar a mano o calcular desde el de contado con un descuento en % o en $.
+  const withDiscount = (listPrice: string, type: DiscountType, value: string) => {
+    const amount = Number(value.replace(",", "."));
+    return amount > 0 && Number(listPrice) > 0 ? String(cashFromDiscount(Number(listPrice), type, amount)) : null;
+  };
+  const changeListPrice = (digits: string) => {
+    const cash = withDiscount(digits, discountType, discountValue);
+    setForm({ ...form, listPrice: digits, ...(cash !== null ? { cashPrice: cash } : {}) });
+  };
+  const changeDiscount = (type: DiscountType, value: string) => {
+    setDiscountType(type);
+    setDiscountValue(value);
+    const cash = withDiscount(form.listPrice, type, value);
+    if (cash !== null) setForm({ ...form, cashPrice: cash });
+  };
+  const changeCashPrice = (digits: string) => { setDiscountValue(""); setForm({ ...form, cashPrice: digits }); };
+  const implied = impliedDiscount(Number(form.listPrice), Number(form.cashPrice));
   const totalPages = Math.max(1, Math.ceil(data.total / data.pageSize));
 
   return <>
@@ -125,8 +147,21 @@ export function ProductsTab({ categories, subCategories = {}, brands = [] }: { c
       <input value={form.brand} onChange={(e) => set("brand", e.target.value)} placeholder="Marca" list="brands" />
       <datalist id="brands">{brands.map((brand) => <option key={brand} value={brand} />)}</datalist>
       <datalist id="categories">{categories.map((c) => <option key={c} value={c} />)}</datalist>
-      <input value={form.cashPrice} onChange={(e) => set("cashPrice", e.target.value.replace(/\D/g, ""))} placeholder="Precio en efectivo" inputMode="numeric" required />
-      <input value={form.listPrice} onChange={(e) => set("listPrice", e.target.value.replace(/\D/g, ""))} placeholder="Precio de contado" inputMode="numeric" required />
+      <label className="field">Precio en efectivo ($)
+        <input value={form.cashPrice} onChange={(e) => changeCashPrice(e.target.value.replace(/\D/g, ""))} placeholder="Precio en efectivo" inputMode="numeric" required />
+      </label>
+      <label className="field">Precio de contado ($)
+        <input value={form.listPrice} onChange={(e) => changeListPrice(e.target.value.replace(/\D/g, ""))} placeholder="Precio de contado" inputMode="numeric" required />
+      </label>
+      <div className="cash-discount">
+        <b>Descuento en efectivo</b>
+        <select value={discountType} onChange={(e) => changeDiscount(e.target.value as DiscountType, discountValue)} aria-label="Tipo de descuento">
+          <option value="percent">Porcentaje (%)</option>
+          <option value="amount">Monto ($)</option>
+        </select>
+        <input value={discountValue} onChange={(e) => changeDiscount(discountType, e.target.value.replace(/[^\d.,]/g, ""))} placeholder={discountType === "percent" ? "Ej. 15" : "Ej. 5000"} inputMode="decimal" aria-label="Valor del descuento" />
+        <small>{discountValue && Number(form.listPrice) > 0 ? "El precio en efectivo se calcula desde el de contado. " : "Cargá el precio de contado y elegí el descuento para calcular el efectivo. "}{implied ? `Hoy equivale a ${implied.percent} % (−${pesos.format(implied.amount)}).` : Number(form.cashPrice) > 0 && Number(form.listPrice) > 0 ? "El efectivo no es menor al de contado." : ""}</small>
+      </div>
       <textarea value={form.features} onChange={(e) => set("features", e.target.value)} placeholder="Características, una por línea. Ej.: No Frost · 340 L" maxLength={400} />
       <textarea value={form.description} onChange={(e) => set("description", e.target.value)} placeholder="Descripción" />
       <label><input type="checkbox" checked={form.available} onChange={(e) => set("available", e.target.checked)} /> Disponible</label>

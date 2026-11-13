@@ -8,7 +8,7 @@ export const extensionFor = (mime: string): string | null => EXT[mime] ?? null;
 export const isSafeUploadName = (name: string): boolean => /^[a-f0-9]{24}-\d{10,16}\.(jpg|png|webp)$/.test(name);
 export const uploadDir = (): string => path.resolve(process.env.UPLOAD_DIR || "./uploads");
 export const isObjectId = (value: string): boolean => /^[a-f0-9]{24}$/.test(value);
-export const MAX_IMAGES_PER_PRODUCT = 10;
+export { MAX_IMAGES_PER_PRODUCT } from "./image-limits";
 
 /** Detecta el tipo real de la imagen por sus primeros bytes, sin confiar en el tipo que declara el cliente. */
 export function detectImageType(buffer: Buffer): "image/jpeg" | "image/png" | "image/webp" | null {

@@ -2,7 +2,9 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { shrinkImage } from "@/lib/client-image";
+import { MAX_IMAGES_PER_PRODUCT, planUploads } from "@/lib/image-limits";
 import { normalizeImageUrl } from "@/lib/image-url";
+import { ImagePlaceholder } from "../image-placeholder";
 import type { Product } from "@/lib/types";
 
 const pesos = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
@@ -17,6 +19,8 @@ export function ProductsTab({ categories, subCategories = {}, brands = [] }: { c
   const [form, setForm] = useState(emptyForm);
   const [editing, setEditing] = useState<string | null>(null);
   const [images, setImages] = useState<string[]>([]);
+  const [uploading, setUploading] = useState<{ done: number; total: number } | null>(null);
+  const [dragging, setDragging] = useState(false);
   const [message, setMessage] = useState("");
 
   const load = useCallback(async () => {
@@ -71,15 +75,33 @@ export function ProductsTab({ categories, subCategories = {}, brands = [] }: { c
     void load();
   }
 
-  async function upload(file: File | undefined) {
-    if (!file || !editing) return;
-    const body = new FormData();
-    body.set("file", await shrinkImage(file));
-    const response = await fetch(`/api/admin/products/${editing}/images`, { method: "POST", body });
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok) return setMessage(result.error ?? "No se pudo subir la imagen.");
-    setImages(result.images);
+  // Varias imágenes juntas: se suben de a una (en orden) para que el servidor no pise la lista de fotos del artículo.
+  async function uploadMany(selected: File[]) {
+    if (!editing || uploading || selected.length === 0) return;
+    const plan = planUploads(selected, images.length);
+    const problems: string[] = [];
+    if (plan.wrongType.length) problems.push(`${plan.wrongType.length} no son JPG, PNG ni WebP`);
+    if (plan.overLimit) problems.push(`${plan.overLimit} no entraron (máximo ${MAX_IMAGES_PER_PRODUCT} por artículo)`);
+    let ok = 0;
+    setMessage("");
+    for (let index = 0; index < plan.accepted.length; index++) {
+      setUploading({ done: index, total: plan.accepted.length });
+      const file = plan.accepted[index];
+      try {
+        const body = new FormData();
+        body.set("file", await shrinkImage(file));
+        const response = await fetch(`/api/admin/products/${editing}/images`, { method: "POST", body });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) { problems.push(`${file.name}: ${result.error ?? "no se pudo subir"}`); continue; }
+        setImages(result.images);
+        ok++;
+      } catch {
+        problems.push(`${file.name}: falló la conexión`);
+      }
+    }
+    setUploading(null);
     void load();
+    setMessage([ok ? `Se subieron ${ok} imágenes.` : "", ...problems].filter(Boolean).join(" · "));
   }
 
   async function removeImage(url: string) {
@@ -115,7 +137,13 @@ export function ProductsTab({ categories, subCategories = {}, brands = [] }: { c
         <div className="image-manager-list">
           {images.map((url) => <span key={url}><img src={normalizeImageUrl(url, 160)} alt="" width={64} height={64} /><button type="button" onClick={() => void removeImage(url)} aria-label="Quitar imagen">×</button></span>)}
         </div>
-        <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => { void upload(e.target.files?.[0]); e.target.value = ""; }} />
+        <div className={`image-dropzone${dragging ? " dragging" : ""}`}
+          onDragOver={(e) => { e.preventDefault(); setDragging(true); }} onDragLeave={() => setDragging(false)}
+          onDrop={(e) => { e.preventDefault(); setDragging(false); void uploadMany([...e.dataTransfer.files]); }}>
+          <input id="product-images" type="file" multiple accept="image/jpeg,image/png,image/webp" disabled={!!uploading}
+            onChange={(e) => { void uploadMany([...(e.target.files ?? [])]); e.target.value = ""; }} />
+          <small>{uploading ? `Subiendo ${uploading.done + 1} de ${uploading.total}…` : `Elegí varias a la vez (Ctrl o Shift) o arrastralas acá. ${images.length} de ${MAX_IMAGES_PER_PRODUCT}.`}</small>
+        </div>
       </div> : <small>Guardá el producto para poder cargarle imágenes.</small>}
       <button>{editing ? "Guardar cambios" : "Crear producto"}</button>
       {editing ? <button type="button" onClick={reset}>Cancelar</button> : null}
@@ -126,7 +154,7 @@ export function ProductsTab({ categories, subCategories = {}, brands = [] }: { c
     <div className="product-admin-list">
       {data.items.map((product) => (
         <article key={product.id}>
-          <span>{product.image ? <img src={normalizeImageUrl(product.image, 120)} alt="" width={40} height={40} /> : "📦"}</span>
+          <span>{product.image ? <img src={normalizeImageUrl(product.image, 120)} alt="" width={40} height={40} /> : <ImagePlaceholder label="Sin foto" />}</span>
           <div><b>{product.name}</b><small>{product.sku} · {product.category}{product.available ? "" : " · no disponible"}{product.active ? "" : " · INACTIVO"}</small></div>
           <strong>{pesos.format(product.cashPrice)} / {pesos.format(product.listPrice)}</strong>
           <button onClick={() => edit(product)}>Editar</button>

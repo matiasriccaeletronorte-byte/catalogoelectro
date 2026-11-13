@@ -43,7 +43,7 @@ export function ProductCard({ product, offerEndsAt, currentTime = Date.now() }: 
       <div className="badges">{product.outlet ? <small>OUTLET</small> : null}{product.brand ? <em>{product.brand}</em> : null}</div>
       {timer ? <div className="offer-card-timer"><span>Oferta expira en</span><b>{timer.days > 0 ? `${timer.days}d ` : ""}{String(timer.hours).padStart(2, "0")}:{String(timer.minutes).padStart(2, "0")}:{String(timer.seconds).padStart(2, "0")}</b></div> : null}
       <h3><Link href={`/productos/${product.id}`}>{product.name}</Link></h3>
-      <p>{product.description}</p><PriceBlock product={product} />
+      {product.description ? <p>{product.description}</p> : null}<PriceBlock product={product} />
       <div className="card-notes" aria-label="Características del producto">{features.length > 0 ? features.map((feature) => <span key={feature}>{feature}</span>) : <span>Consultá características y envío</span>}</div>
       <div className="card-footer"><span className={product.available ? "stock in" : "stock"}>{product.available ? "Disponible" : "Consultar disponibilidad"}</span><AddToCartButton productId={product.id} className="add-cart-button small" /><WhatsappButton product={product} className="whatsapp-button small" /></div>
     </div>

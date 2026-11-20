@@ -297,7 +297,7 @@ export function AdminPanel() {
                       <input value={slide.tag} onChange={(event) => updateSlide(index, "tag", event.target.value)} placeholder="Etiqueta" />
                       <input value={slide.title} onChange={(event) => updateSlide(index, "title", event.target.value)} placeholder="Título" />
                       <textarea value={slide.text} onChange={(event) => updateSlide(index, "text", event.target.value)} placeholder="Texto" />
-                      {([["image", "Escritorio", "2400 × 440 px"], ["mobileImage", "Celular", "800 × 410 px"]] as const).map(([field, label, size]) => (
+                      {([["image", "Escritorio", "2400 × 600 px"], ["mobileImage", "Celular", "800 × 410 px"]] as const).map(([field, label, size]) => (
                         <div className="slide-image-field" key={field}>
                           {slide[field] ? <img src={slide[field]} alt={`Imagen para ${label.toLowerCase()}`} /> : <span>Sin imagen</span>}
                           <label className="slide-image-upload">

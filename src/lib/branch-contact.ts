@@ -39,3 +39,10 @@ export function parseStoredBranch(raw: string | null): string | null {
   if (!raw || raw.length > 200) return null;
   return raw;
 }
+
+/** WhatsApp argentino (549 + área + número) escrito como se marca desde el país: 5491121743430 → 011 2174-3430. Si no lo reconoce, lo devuelve igual. */
+export function formatWhatsapp(value: string): string {
+  const digits = value.replace(/\D/g, "");
+  const match = /^549(11)(\d{4})(\d{4})$/.exec(digits);
+  return match ? `0${match[1]} ${match[2]}-${match[3]}` : value.trim();
+}

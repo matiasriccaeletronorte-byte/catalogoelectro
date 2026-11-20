@@ -1,3 +1,5 @@
+import { formatWhatsapp } from "./branch-contact";
+
 export type Branch = { name: string; city: string; phone: string; whatsapp: string; query: string };
 
 export const DEFAULT_BRANCHES: Branch[] = [
@@ -10,10 +12,11 @@ export function branchesOrDefault(saved: Branch[] | undefined | null): Branch[] 
   return saved ? saved : DEFAULT_BRANCHES;
 }
 
-/** Las sucursales y sus direcciones son fijas: del formulario solo se toman el teléfono y el WhatsApp de cada una (se emparejan por nombre). No se agregan, no se quitan y no se editan direcciones. */
-export function mergeBranchNumbers(current: Branch[], submitted: { name: string; phone?: string; whatsapp?: string }[]): Branch[] {
+/** Las sucursales y sus direcciones son fijas: del formulario solo se toma el WhatsApp de cada una (se empareja por nombre). El teléfono que se muestra sale de ese mismo número. No se agregan, no se quitan y no se editan direcciones. */
+export function mergeBranchNumbers(current: Branch[], submitted: { name: string; whatsapp?: string }[]): Branch[] {
   return current.map((branch) => {
     const sent = submitted.find((item) => item.name === branch.name);
-    return sent ? { ...branch, phone: (sent.phone ?? branch.phone).trim(), whatsapp: (sent.whatsapp ?? branch.whatsapp).trim() } : branch;
+    const whatsapp = (sent?.whatsapp ?? branch.whatsapp).trim();
+    return sent ? { ...branch, whatsapp, phone: formatWhatsapp(whatsapp) } : branch;
   });
 }

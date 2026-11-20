@@ -1,3 +1,4 @@
+import { formatWhatsapp } from "@/lib/branch-contact";
 import type { Branch } from "./branches";
 import type { Product } from "./types";
 
@@ -53,7 +54,7 @@ export function storeJsonLd(base: string, branches: Branch[], phone: string) {
     subOrganization: branches.map((branch) => ({
       "@type": "ElectronicsStore",
       name: `${SITE_NAME} ${branch.name}`,
-      telephone: branch.phone,
+      telephone: formatWhatsapp(branch.whatsapp),
       containedInPlace: { "@type": "AdministrativeArea", name: "Partido de Malvinas Argentinas, Buenos Aires" },
       address: { "@type": "PostalAddress", streetAddress: branch.name, addressLocality: branch.city.split(",")[0]?.trim() || city, addressRegion: region ?? "Buenos Aires", addressCountry: "AR" }
     }))

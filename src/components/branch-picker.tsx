@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import type { Branch } from "@/lib/branches";
-import { branchLocation } from "@/lib/branch-contact";
+import { formatWhatsapp, branchLocation } from "@/lib/branch-contact";
 
 export function BranchPicker({ branches, current, onChoose, onClose }: { branches: Branch[]; current: string; onChoose: (branch: Branch) => void; onClose: () => void }) {
   const panel = useRef<HTMLDivElement>(null);
@@ -33,7 +33,7 @@ export function BranchPicker({ branches, current, onChoose, onClose }: { branche
         {branches.map((branch) => <button type="button" key={branch.name} className={`branch-option${branch.name === current ? " current" : ""}`} onClick={() => onChoose(branch)}>
           <span className="branch-option-name">{branch.name}</span>
           <span className="branch-option-place">{branchLocation(branch)}</span>
-          <span className="branch-option-phone">WhatsApp {branch.phone}</span>
+          <span className="branch-option-phone">WhatsApp {formatWhatsapp(branch.whatsapp)}</span>
           <span className="branch-option-cta">Escribir por WhatsApp</span>
         </button>)}
       </div>

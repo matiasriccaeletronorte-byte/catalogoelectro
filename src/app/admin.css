@@ -204,3 +204,6 @@
 .branch-numbers label{display:grid;gap:4px;font-size:13px;font-weight:600;color:var(--muted)}
 .branch-numbers input{padding:10px;border:1px solid var(--line);border-radius:7px;font:inherit;background:#fff;color:var(--text)}
 .branch-fixed-place{margin:0;color:var(--muted);font-size:14px}
+.tree-image{display:inline-flex;align-items:center;gap:6px}
+.tree-image img,.tree-image-empty{width:40px;height:40px;border-radius:6px;border:1px solid var(--line);background:#fff;object-fit:contain}
+.tree-image-empty{display:grid;place-items:center;font-size:11px;color:var(--muted)}

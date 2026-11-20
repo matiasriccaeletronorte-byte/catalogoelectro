@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_BRANCHES, type Branch } from "./branches";
-import { branchLocation, branchMapQuery, chooseBranch, contactableBranches, parseStoredBranch, phoneDigits } from "./branch-contact";
+import { branchLocation, formatWhatsapp, branchMapQuery, chooseBranch, contactableBranches, parseStoredBranch, phoneDigits } from "./branch-contact";
 
 const a: Branch = { name: "Rivadavia 1743", city: "Los Polvorines, Buenos Aires", phone: "011 2174-3430", whatsapp: "5491121743430", query: "Rivadavia 1743 Los Polvorines Buenos Aires" };
 const b: Branch = { name: "Av. Sesquicentenario 1106", city: "Los Polvorines, Buenos Aires", phone: "011 5456-0043", whatsapp: "+54 9 11 5456-0043", query: "" };
@@ -70,5 +70,16 @@ describe("parseStoredBranch", () => {
     expect(parseStoredBranch(null)).toBeNull();
     expect(parseStoredBranch("")).toBeNull();
     expect(parseStoredBranch("x".repeat(300))).toBeNull();
+  });
+});
+
+describe("formatWhatsapp", () => {
+  it("muestra el WhatsApp argentino como número local", () => {
+    expect(formatWhatsapp("5491121743430")).toBe("011 2174-3430");
+    expect(formatWhatsapp("+54 9 11 5456-0043")).toBe("011 5456-0043");
+  });
+  it("si no reconoce el formato, lo deja como está", () => {
+    expect(formatWhatsapp("12345")).toBe("12345");
+    expect(formatWhatsapp("")).toBe("");
   });
 });

@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import { shrinkImage } from "@/lib/client-image";
 import { buildTree, descendantIds, formatPath, nodePath, type CategoryNodeData, type TreeNode } from "@/lib/category-tree";
 
 type Data = { nodes: CategoryNodeData[]; counts: Record<string, number>; legacyProducts: number };
@@ -12,6 +13,28 @@ export function CategoriesTab({ onChange }: { onChange: () => void }) {
   const [open, setOpen] = useState<Set<string>>(new Set());
   const [pending, setPending] = useState<Pending>(null);
   const [adding, setAdding] = useState<string | null>(null);
+  const [images, setImages] = useState<{ name: string; image: string }[]>([]);
+
+  useEffect(() => {
+    fetch("/api/admin/settings").then((r) => (r.ok ? r.json() : null)).then((s) => { if (s) setImages(s.categoryImages ?? []); });
+  }, []);
+
+  async function saveImages(next: { name: string; image: string }[]) {
+    const response = await fetch("/api/admin/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ categoryImages: next }) });
+    if (!response.ok) return setMessage("No se pudo guardar la imagen.");
+    setImages(next);
+    setMessage("");
+  }
+
+  async function uploadImage(name: string, file: File | undefined) {
+    if (!file) return;
+    const body = new FormData();
+    body.set("file", await shrinkImage(file, 800));
+    const response = await fetch("/api/admin/banner-image", { method: "POST", body });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) return setMessage(result.error ?? "No se pudo subir la imagen.");
+    await saveImages([...images.filter((item) => item.name !== name), { name, image: result.url }]);
+  }
 
   const load = useCallback(async () => {
     const response = await fetch("/api/admin/category-tree");
@@ -78,6 +101,16 @@ export function CategoriesTab({ onChange }: { onChange: () => void }) {
     return <div key={node.id} className="tree-item">
       <div className="tree-row" style={{ paddingLeft: depth * 22 }}>
         <button type="button" className="tree-toggle" onClick={() => toggle(node.id)} aria-expanded={isOpen} aria-label={isOpen ? "Cerrar" : "Abrir"} disabled={node.children.length === 0}>{node.children.length === 0 ? "·" : isOpen ? "▾" : "▸"}</button>
+        {depth === 0 ? (() => {
+          const current = images.find((item) => item.name === node.name);
+          return <span className="tree-image">
+            {current ? <img src={current.image} alt="" width={40} height={40} /> : <span className="tree-image-empty">Auto</span>}
+            <label className="row-action">{current ? "Cambiar imagen" : "Subir imagen"}
+              <input type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => { void uploadImage(node.name, e.target.files?.[0]); e.target.value = ""; }} />
+            </label>
+            {current ? <button type="button" className="row-action" onClick={() => void saveImages(images.filter((item) => item.name !== node.name))}>Quitar imagen</button> : null}
+          </span>;
+        })() : null}
         <b>{node.name}</b>
         <span className="tree-count">{count} {count === 1 ? "artículo" : "artículos"}</span>
         <span className="tree-actions">
@@ -118,7 +151,6 @@ export function CategoriesTab({ onChange }: { onChange: () => void }) {
       <input name="name" placeholder="Nueva categoría de primer nivel" maxLength={60} required />
       <button>Agregar</button>
     </form>
-    <small>Las categorías se ordenan de la A a la Z ("Otros" siempre al final). Una categoría solo se puede borrar si no tiene subcategorías ni artículos.</small>
     {message ? <small role="alert" className="tree-message">{message}</small> : null}
     <div className="category-tree-view">{buildTree(data.nodes).map((node) => row(node, 0))}</div>
   </>;

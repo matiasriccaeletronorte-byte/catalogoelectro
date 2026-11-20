@@ -13,7 +13,7 @@ import { useSiteSettings } from "./site-settings-provider";
 import { ProductCard } from "@/components/product-card";
 import { Product } from "@/lib/types";
 import { normalizeImageUrl } from "@/lib/image-url";
-import { branchLocation, branchMapQuery } from "@/lib/branch-contact";
+import { formatWhatsapp, branchLocation, branchMapQuery } from "@/lib/branch-contact";
 
 const defaultSlides = [
   {
@@ -192,7 +192,7 @@ export function HomePage({ shelves, categoryTiles, homepage, featured, categoryH
                 {branchLocation(branch)}
               </a>
               <a className="location-phone location-whatsapp" href={`https://wa.me/${branch.whatsapp}`} target="_blank" rel="noreferrer" aria-label={`Escribir por WhatsApp a ${branch.name}`}>
-                <span aria-hidden="true">◉</span> WhatsApp: {branch.phone}
+                <span aria-hidden="true">◉</span> WhatsApp: {formatWhatsapp(branch.whatsapp)}
               </a>
             </div>
             <div className="location-map">

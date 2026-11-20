@@ -11,6 +11,7 @@ import { buildCategoryTiles } from "@/lib/home-categories";
 import { buildHomeShelves } from "@/lib/home-shelves";
 import { normalizeImageUrl } from "@/lib/image-url";
 import { loadNodes } from "@/lib/category-store";
+import { getMenuTree } from "@/lib/menu-tree";
 import { categoryHref, findByName } from "@/lib/category-tree";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +20,8 @@ export default async function Page() {
   await connectDb();
   const settings = await getSiteSettings();
   const [shelves, categoryTiles, homepage] = await Promise.all([buildHomeShelves(), buildCategoryTiles(settings.categoryImages), getHomepageSettings()]);
+  const tree = await getMenuTree();
+  const menu = tree.length > 0 ? tree : categoryTiles.map((tile) => ({ id: tile.name, name: tile.name, href: `/catalogo?category=${encodeURIComponent(tile.name)}`, count: tile.total, children: [] }));
   const featuredIds = [...new Set([...homepage.bestSellerIds, ...homepage.offerIds])];
   const featured = await getProductsByIds(featuredIds);
   const nodes = await loadNodes();
@@ -33,6 +36,6 @@ export default async function Page() {
   if (firstBanner) preload(normalizeImageUrl(firstBanner, 1000), { as: "image", fetchPriority: "high" });
   return <>
     <JsonLd data={storeJsonLd(siteUrl(), settings.branches, settings.whatsappPhone)} />
-    <HomePage shelves={shelves} categoryTiles={categoryTiles} homepage={homepage} featured={featured} categoryHrefs={categoryHrefs} />
+    <HomePage shelves={shelves} categoryTiles={categoryTiles} homepage={homepage} featured={featured} categoryHrefs={categoryHrefs} menu={menu} />
   </>;
 }

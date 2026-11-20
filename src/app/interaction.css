@@ -356,3 +356,30 @@ button.whatsapp-fab{border:0;cursor:pointer}
 .filters-panel a.facet-sub-link:hover{color:var(--brand)}
 .filters-panel a.facet-back{color:var(--brand);font-weight:800;font-size:13px}
 .filters-panel .facet-current{display:block;padding:10px 0;font-size:15px;border-bottom:1px solid var(--line)}
+
+/* Menú Categorías por niveles */
+.category-menu{position:relative;flex:0 0 auto}
+.category-menu .dropdown-trigger.active{border-bottom-color:var(--brand)}
+.menu-panel{position:absolute;top:100%;left:0;z-index:40;display:grid;grid-template-columns:280px 1fr;width:min(1100px,calc(100vw - 32px));min-height:380px;max-height:70vh;background:#fff;border:1px solid var(--line);border-radius:0 0 12px 12px;box-shadow:0 24px 48px rgba(31,35,40,.2);overflow:hidden}
+.menu-roots{display:flex;flex-direction:column;overflow-y:auto;background:#fff;border-right:1px solid var(--line)}
+.menu-root{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:12px 16px;border:0;border-radius:0;background:#fff;color:var(--text);font-family:inherit;font-size:14px;font-weight:600;text-align:left;text-decoration:none;cursor:pointer}
+.menu-root:hover,.menu-root:focus-visible{background:#fff3f4}
+.menu-root.active{background:var(--brand);color:#fff}
+.menu-root em{font-style:normal;opacity:.7}
+.menu-sub{padding:20px 28px;overflow-y:auto}
+.menu-sub-head{display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:16px}
+.menu-sub-head h3{margin:0;font-size:24px;letter-spacing:-.5px}
+.menu-all{font-size:13px;font-weight:700;color:var(--brand);text-decoration:none}.menu-all:hover{text-decoration:underline}
+.menu-cols{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:18px 24px}
+.menu-col{display:grid;align-content:start;gap:7px}
+.menu-col a{font-size:14px;color:var(--text);text-decoration:none}.menu-col a:hover{color:var(--brand);text-decoration:underline}
+.menu-col .menu-col-title{font-weight:800}
+.menu-col .menu-col-all{color:var(--muted);font-size:13px}
+.menu-back{display:none}
+@media(max-width:860px){
+  .menu-panel{position:fixed;left:0;right:0;top:var(--menu-top,128px);bottom:0;width:auto;max-height:none;border-radius:0;grid-template-columns:1fr}
+  .menu-panel.has-sub .menu-roots{display:none}
+  .menu-back{display:inline-flex;margin-bottom:10px;background:none;color:var(--brand);font-weight:800;padding:4px 0;border:0}
+  .menu-sub{padding:14px 16px}
+  .menu-sub-head h3{font-size:20px}
+}

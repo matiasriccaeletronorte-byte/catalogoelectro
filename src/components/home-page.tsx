@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { HomepageSettings } from "@/lib/homepage-settings";
-import { useRouter } from "next/navigation";
 import type { HomeShelves } from "@/lib/home-shelves";
 import { ProductShelf } from "./product-shelf";
+import { CategoryMenu } from "./category-menu";
+import type { MenuNode } from "@/lib/category-tree";
 import { CategoryStrip } from "./category-strip";
 import type { CategoryTile } from "@/lib/home-categories";
 import { useSiteSettings } from "./site-settings-provider";
@@ -36,18 +37,14 @@ const defaultSlides = [
 ];
 
 
-export function HomePage({ shelves, categoryTiles, homepage, featured, categoryHrefs }: { shelves: HomeShelves; categoryTiles: CategoryTile[]; homepage: HomepageSettings; featured: Product[]; categoryHrefs: Record<string, string> }) {
+export function HomePage({ shelves, categoryTiles, homepage, featured, categoryHrefs, menu }: { shelves: HomeShelves; categoryTiles: CategoryTile[]; homepage: HomepageSettings; featured: Product[]; categoryHrefs: Record<string, string>; menu: MenuNode[] }) {
   const { branches } = useSiteSettings();
-  const router = useRouter();
   const featuredProducts = featured;
   const hrefFor = (name: string) => categoryHrefs[name] ?? `/catalogo?category=${encodeURIComponent(name)}`;
   const [slide, setSlide] = useState(0);
-  const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(() => Date.now());
 
   const carouselSlides = homepage.carouselSlides.length > 0 ? homepage.carouselSlides : defaultSlides;
-  const categoriesMenu = useMemo(() => categoryTiles.map((tile) => tile.name), [categoryTiles]);
-  const menuCategories = categoriesMenu.length > 0 ? categoriesMenu : ["Electrodomésticos", "Tecnología", "Hogar"];
 
   const indexedProducts = useMemo(() => new Map(featuredProducts.map((product) => [product.id, product])), [featuredProducts]);
   const resolveProducts = (ids: string[], fallback: Product[]) => {
@@ -78,43 +75,12 @@ export function HomePage({ shelves, categoryTiles, homepage, featured, categoryH
   const currentSlideImage = normalizeImageUrl(currentSlide.image, 1000);
   const offerTimers = useMemo(() => new Map(homepage.offerTimers.map((timer) => [timer.productId, timer.endsAt])), [homepage.offerTimers]);
 
-  const goToCatalog = (selectedCategory: string) => {
-    setOpenMenu(null);
-    router.push(selectedCategory === "Todos" ? "/catalogo" : `/catalogo?category=${encodeURIComponent(selectedCategory)}`);
-  };
-
   return (
     <main className="home">
       <h1 className="sr-only">Electronorte Outlet: electrodomésticos y tecnología en Los Polvorines</h1>
       <section className="retail-nav" aria-label="Accesos rápidos">
         <div className="retail-nav-row">
-          <div className="dropdown">
-            <button
-              className={openMenu === "categorias" ? "dropdown-trigger active" : "dropdown-trigger"}
-              type="button"
-              onClick={() => setOpenMenu(openMenu === "categorias" ? null : "categorias")}
-              aria-expanded={openMenu === "categorias"}
-              aria-controls="categories-menu"
-            >
-              <span>Categorías</span>
-              <strong>{openMenu === "categorias" ? "✕" : "▾"}</strong>
-            </button>
-            {openMenu === "categorias" ? (
-              <div className="dropdown-panel" id="categories-menu">
-                {menuCategories.map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    className="dropdown-item"
-                    onClick={() => goToCatalog(item)}
-                  >
-                    <span>{item}</span>
-                    <em>›</em>
-                  </button>
-                ))}
-              </div>
-            ) : null}
-          </div>
+          <CategoryMenu menu={menu} />
           {bestSellers.length > 0 ? <button className="retail-link" type="button" onClick={() => document.getElementById("mas-vendidos")?.scrollIntoView({ behavior: "smooth" })}>
             Más vendidos
           </button> : null}

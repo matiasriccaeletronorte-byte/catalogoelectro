@@ -19,13 +19,13 @@ type HomepageSettings = {
   offerIds: string[];
   offerTimers: { productId: string; endsAt: string }[];
   heroImages: string[];
-  carouselSlides: { tag: string; title: string; text: string; image: string }[];
+  carouselSlides: { tag: string; title: string; text: string; image: string; mobileImage: string }[];
 };
 
 type Tab = "products" | "import" | "settings" | "home" | "categories" | "brands" | "coupons" | "bank";
 type FeaturedKey = "bestSellerIds" | "offerIds";
 
-const emptySlide = { tag: "", title: "", text: "", image: "" };
+const emptySlide = { tag: "", title: "", text: "", image: "", mobileImage: "" };
 
 export function AdminPanel() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
@@ -63,7 +63,8 @@ export function AdminPanel() {
       heroImages: homepageData.heroImages ?? [],
       carouselSlides: (homepageData.carouselSlides ?? []).map((slide: typeof emptySlide) => ({
         ...slide,
-        image: slide.image ?? ""
+        image: slide.image ?? "",
+        mobileImage: slide.mobileImage ?? ""
       })),
     });
     const featuredIds = [...new Set([...(homepageData.bestSellerIds ?? []), ...(homepageData.offerIds ?? [])])];
@@ -181,14 +182,14 @@ export function AdminPanel() {
     });
   };
 
-  const uploadSlideImage = async (index: number, file: File | undefined) => {
+  const uploadSlideImage = async (index: number, file: File | undefined, field: "image" | "mobileImage" = "image") => {
     if (!file) return;
     const body = new FormData();
-    body.set("file", await shrinkImage(file, 2400));
+    body.set("file", await shrinkImage(file, field === "image" ? 2400 : 1000));
     const response = await fetch("/api/admin/banner-image", { method: "POST", body });
     const result = await response.json().catch(() => ({}));
     if (!response.ok) return setMessage(result.error ?? "No se pudo subir la imagen.");
-    updateSlide(index, "image", result.url);
+    updateSlide(index, field, result.url);
     setMessage("Imagen subida. Guardá los cambios para publicarla.");
   };
 
@@ -197,7 +198,7 @@ export function AdminPanel() {
     setHomeSettings((current) => ({ ...current, carouselSlides: current.carouselSlides.filter((_, itemIndex) => itemIndex !== index) }));
 
   async function saveHomepageSettings() {
-    const carouselSlides = homeSettings.carouselSlides.map((slide) => ({ ...slide, image: normalizeImageUrl(slide.image, 1000) }));
+    const carouselSlides = homeSettings.carouselSlides.map((slide) => ({ ...slide, image: normalizeImageUrl(slide.image, 1000), mobileImage: normalizeImageUrl(slide.mobileImage, 800) }));
     const heroImages = homeSettings.heroImages.map((image) => normalizeImageUrl(image)).filter(Boolean);
     const bestSellerIds = homeSettings.bestSellerIds.slice(0, 3);
     const offerIds = homeSettings.offerIds.slice(0, 3);
@@ -296,15 +297,16 @@ export function AdminPanel() {
                       <input value={slide.tag} onChange={(event) => updateSlide(index, "tag", event.target.value)} placeholder="Etiqueta" />
                       <input value={slide.title} onChange={(event) => updateSlide(index, "title", event.target.value)} placeholder="Título" />
                       <textarea value={slide.text} onChange={(event) => updateSlide(index, "text", event.target.value)} placeholder="Texto" />
-                      <div className="slide-image-field">
-                        {slide.image ? <img src={slide.image} alt="Imagen del slide" /> : <span>Sin imagen</span>}
-                        <label className="slide-image-upload">
-                          {slide.image ? "Cambiar imagen" : "Subir imagen"}
-                          <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => { void uploadSlideImage(index, event.target.files?.[0]); event.target.value = ""; }} />
-                        </label>
-                        {slide.image ? <button type="button" onClick={() => updateSlide(index, "image", "")}>Quitar imagen</button> : null}
-                      </div>
-                      <small>La imagen se sube a la tienda (JPG, PNG o WebP, hasta 4 MB). Mejor en formato horizontal, por ejemplo 1920 × 720.</small>
+                      {([["image", "Escritorio", "2400 × 550 px"], ["mobileImage", "Celular", "800 × 410 px"]] as const).map(([field, label, size]) => (
+                        <div className="slide-image-field" key={field}>
+                          {slide[field] ? <img src={slide[field]} alt={`Imagen para ${label.toLowerCase()}`} /> : <span>Sin imagen</span>}
+                          <label className="slide-image-upload">
+                            {slide[field] ? `Cambiar imagen de ${label.toLowerCase()}` : `Subir imagen de ${label.toLowerCase()}`} ({size})
+                            <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => { void uploadSlideImage(index, event.target.files?.[0], field); event.target.value = ""; }} />
+                          </label>
+                          {slide[field] ? <button type="button" onClick={() => updateSlide(index, field, "")}>Quitar</button> : null}
+                        </div>
+                      ))}
                       <button type="button" onClick={() => removeSlide(index)}>Eliminar slide</button>
                     </article>
                   ))}

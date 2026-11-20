@@ -13,6 +13,7 @@ import { useSiteSettings } from "./site-settings-provider";
 import { ProductCard } from "@/components/product-card";
 import { Product } from "@/lib/types";
 import { normalizeImageUrl } from "@/lib/image-url";
+import { slideImages } from "@/lib/slide-images";
 import { formatWhatsapp, branchLocation, branchMapQuery } from "@/lib/branch-contact";
 
 const defaultSlides = [
@@ -72,7 +73,9 @@ export function HomePage({ shelves, categoryTiles, homepage, featured, categoryH
   }, [homepage.offerTimers]);
 
   const currentSlide = carouselSlides[slide];
-  const currentSlideImage = normalizeImageUrl(currentSlide.image, 1000);
+  const images = slideImages(currentSlide);
+  const currentSlideImage = normalizeImageUrl(images.desktop, 1000);
+  const currentMobileImage = normalizeImageUrl(images.mobile, 800);
   const offerTimers = useMemo(() => new Map(homepage.offerTimers.map((timer) => [timer.productId, timer.endsAt])), [homepage.offerTimers]);
 
   return (
@@ -103,7 +106,10 @@ export function HomePage({ shelves, categoryTiles, homepage, featured, categoryH
         <div className={`hero-carousel hero-carousel-wide${currentSlideImage ? " has-image" : ""}`}>
           {currentSlideImage ? (
             <div className="hero-carousel-media carousel-enter" key={`image-${slide}`}>
-              <img className="hero-main" src={currentSlideImage} alt={currentSlide.title} fetchPriority="high" decoding="async" />
+              <picture>
+                {currentMobileImage !== currentSlideImage ? <source media="(max-width: 620px)" srcSet={currentMobileImage} /> : null}
+                <img className="hero-main" src={currentSlideImage} alt={currentSlide.title} fetchPriority="high" decoding="async" />
+              </picture>
             </div>
           ) : null}
           {!currentSlideImage ? <span className="badge-soft hero-carousel-tag">{currentSlide.tag}</span> : null}

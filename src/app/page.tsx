@@ -10,6 +10,7 @@ import { getHomepageSettings } from "@/lib/homepage-settings";
 import { buildCategoryTiles } from "@/lib/home-categories";
 import { buildHomeShelves } from "@/lib/home-shelves";
 import { normalizeImageUrl } from "@/lib/image-url";
+import { slideImages } from "@/lib/slide-images";
 import { loadNodes } from "@/lib/category-store";
 import { getMenuTree } from "@/lib/menu-tree";
 import { categoryHref, findByName } from "@/lib/category-tree";
@@ -32,8 +33,16 @@ export default async function Page() {
     if (root) categoryHrefs[name] = categoryHref([root]);
   }
   // el banner es lo más grande de la portada: se pide ya, sin esperar a que cargue el código de la página
-  const firstBanner = homepage.carouselSlides[0]?.image;
-  if (firstBanner) preload(normalizeImageUrl(firstBanner, 1000), { as: "image", fetchPriority: "high" });
+  const first = homepage.carouselSlides[0] ? slideImages(homepage.carouselSlides[0]) : null;
+  if (first?.desktop) {
+    const desktop = normalizeImageUrl(first.desktop, 1000);
+    const mobile = normalizeImageUrl(first.mobile, 800);
+    // cada pantalla precarga solo la suya
+    if (mobile !== desktop) {
+      preload(desktop, { as: "image", fetchPriority: "high", media: "(min-width: 621px)" });
+      preload(mobile, { as: "image", fetchPriority: "high", media: "(max-width: 620px)" });
+    } else preload(desktop, { as: "image", fetchPriority: "high" });
+  }
   return <>
     <JsonLd data={storeJsonLd(siteUrl(), settings.branches, settings.whatsappPhone)} />
     <HomePage shelves={shelves} categoryTiles={categoryTiles} homepage={homepage} featured={featured} categoryHrefs={categoryHrefs} menu={menu} />

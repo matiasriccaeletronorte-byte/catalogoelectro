@@ -4,7 +4,8 @@ const carouselSlideSchema = new Schema({
   tag: { type: String, default: "" },
   title: { type: String, default: "" },
   text: { type: String, default: "" },
-  image: { type: String, default: "" }
+  image: { type: String, default: "" },
+  mobileImage: { type: String, default: "" }
 }, { _id: false });
 
 const bankPromoSchema = new Schema({

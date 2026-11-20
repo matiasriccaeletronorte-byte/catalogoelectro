@@ -17,7 +17,8 @@ const schema = z.object({
     tag: z.string().max(40),
     title: z.string().max(80),
     text: z.string().max(180),
-    image: z.string().max(300).regex(/^(|https:\/\/\S+|\/api\/uploads\/\S+)$/).default("")
+    image: z.string().max(300).regex(/^(|https:\/\/\S+|\/api\/uploads\/\S+)$/).default(""),
+    mobileImage: z.string().max(300).regex(/^(|https:\/\/\S+|\/api\/uploads\/\S+)$/).default("")
   })).optional(),
   bankPromotions: z.array(z.object({
     title: z.string().max(60),
@@ -57,7 +58,7 @@ export async function PUT(request: Request) {
   if (offerIds) set.offerIds = offerIds;
   if (offerTimers) set.offerTimers = offerIds ? offerTimers.filter((timer) => offerIds.includes(timer.productId)) : offerTimers;
   if (heroImages) set.heroImages = heroImages.map((image) => normalizeImageUrl(image));
-  if (carouselSlides) set.carouselSlides = carouselSlides.map((slide) => ({ ...slide, image: normalizeImageUrl(slide.image, 1000) }));
+  if (carouselSlides) set.carouselSlides = carouselSlides.map((slide) => ({ ...slide, image: normalizeImageUrl(slide.image, 1000), mobileImage: normalizeImageUrl(slide.mobileImage, 800) }));
   if (bankPromotions) set.bankPromotions = bankPromotions;
   await HomepageSettingsModel.updateOne({ key: homepageKey }, { $set: set }, { upsert: true });
   return NextResponse.json({ ok: true });

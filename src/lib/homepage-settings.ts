@@ -7,7 +7,7 @@ export type HomepageSettings = {
   offerIds: string[];
   offerTimers: { productId: string; endsAt: string }[];
   heroImages: string[];
-  carouselSlides: { tag: string; title: string; text: string; image: string }[];
+  carouselSlides: { tag: string; title: string; text: string; image: string; mobileImage?: string }[];
   bankPromotions: { title: string; description: string; note: string }[];
 };
 

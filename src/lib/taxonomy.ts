@@ -1,3 +1,4 @@
+import { BrandModel } from "@/models/Brand";
 import { ProductModel } from "@/models/Product";
 import { searchTextOf } from "@/lib/product-schema";
 
@@ -11,4 +12,13 @@ export async function renameInProducts(field: Field, from: string, to: string): 
     updateOne: { filter: { _id: row._id }, update: { $set: { [field]: to, searchText: searchTextOf({ ...row, [field]: to }) } } }
   })));
   return rows.length;
+}
+
+/** Elimina una marca. Si tiene artículos, solo lo hace con confirmación y los deja sin marca (no se borran). */
+export async function removeBrand(name: string, clearArticles: boolean): Promise<{ ok: true; cleared: number } | { ok: false; count: number }> {
+  const count = await ProductModel.countDocuments({ brand: name });
+  if (count > 0 && !clearArticles) return { ok: false, count };
+  const cleared = count > 0 ? await renameInProducts("brand", name, "") : 0;
+  await BrandModel.deleteOne({ name });
+  return { ok: true, cleared };
 }

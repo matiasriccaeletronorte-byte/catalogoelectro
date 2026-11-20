@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { isAdmin, unauthorized } from "@/lib/admin-auth";
 import { connectDb } from "@/lib/db";
-import { renameInProducts } from "@/lib/taxonomy";
+import { removeBrand, renameInProducts } from "@/lib/taxonomy";
 import { BrandModel } from "@/models/Brand";
 import { ProductModel } from "@/models/Product";
 
@@ -46,11 +46,10 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   if (!(await isAdmin(request))) return unauthorized();
-  const data = z.object({ name: nameSchema }).safeParse(await request.json());
+  const data = z.object({ name: nameSchema, clearArticles: z.boolean().optional() }).safeParse(await request.json());
   if (!data.success) return NextResponse.json({ error: "Nombre inválido" }, { status: 400 });
   await connectDb();
-  const count = await ProductModel.countDocuments({ brand: data.data.name });
-  if (count > 0) return NextResponse.json({ error: `Hay ${count} artículos con esa marca. Cambialos (o renombrala) antes de eliminarla.` }, { status: 409 });
-  await BrandModel.deleteOne({ name: data.data.name });
-  return NextResponse.json({ ok: true });
+  const result = await removeBrand(data.data.name, data.data.clearArticles === true);
+  if (!result.ok) return NextResponse.json({ error: `Hay ${result.count} artículos con esa marca.`, count: result.count }, { status: 409 });
+  return NextResponse.json({ ok: true, cleared: result.cleared });
 }

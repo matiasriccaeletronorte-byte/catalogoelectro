@@ -29,8 +29,9 @@ export function BrandsTab({ brands, onChange }: { brands: BrandRow[]; onChange: 
   }
 
   async function remove(brand: BrandRow) {
-    if (!window.confirm(`¿Eliminar la marca "${brand.name}"?`)) return;
-    await send("DELETE", { name: brand.name }, "No se pudo eliminar la marca.");
+    const warning = brand.count > 0 ? `\n\nLos ${brand.count} ${brand.count === 1 ? "artículo" : "artículos"} con esta marca no se borran: quedan sin marca.` : "";
+    if (!window.confirm(`¿Eliminar la marca "${brand.name}"?${warning}`)) return;
+    await send("DELETE", { name: brand.name, clearArticles: true }, "No se pudo eliminar la marca.");
   }
 
   return (
@@ -41,7 +42,6 @@ export function BrandsTab({ brands, onChange }: { brands: BrandRow[]; onChange: 
         <input name="brand" placeholder="Nueva marca" required maxLength={40} />
         <button>Agregar</button>
       </form>
-      <small>Al renombrar una marca se actualiza en todos los artículos. Si el nombre nuevo ya existe, las dos se unen. Solo se puede eliminar una marca sin artículos.</small>
       {message ? <small role="alert">{message}</small> : null}
       <div className="brand-list">
         {brands.length === 0 ? <small>Todavía no hay marcas.</small> : brands.map((brand) => (

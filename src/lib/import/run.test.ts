@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { runImport } from "./run";
 import { ProductModel } from "@/models/Product";
+import { CategoryNodeModel } from "@/models/CategoryNode";
 
 // Prueba de integración: usa una base de pruebas en MongoDB local. Si no hay Mongo, se omite.
 const uri = process.env.MONGODB_TEST_URI || "mongodb://localhost:27017/catalogo_test";
@@ -11,13 +12,16 @@ beforeAll(async () => {
   try {
     await mongoose.connect(uri, { serverSelectionTimeoutMS: 1500 });
     await ProductModel.syncIndexes();
+    await CategoryNodeModel.syncIndexes();
     available = true;
   } catch {
     available = false;
   }
 });
-afterAll(async () => { if (available) { await ProductModel.deleteMany({}); await mongoose.disconnect(); } });
-beforeEach(async () => { if (available) await ProductModel.deleteMany({}); });
+afterAll(async () => { if (available) { await ProductModel.deleteMany({});
+  await CategoryNodeModel.deleteMany({}); await mongoose.disconnect(); } });
+beforeEach(async () => { if (available) await ProductModel.deleteMany({});
+  await CategoryNodeModel.deleteMany({}); });
 
 const row = (rowNumber: number, cells: Record<string, unknown>) => ({ rowNumber, cells });
 const full = { name: "Heladera", category: "Heladeras", cashPrice: 100, listPrice: 120 };

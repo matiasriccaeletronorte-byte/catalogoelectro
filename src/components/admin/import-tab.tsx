@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-type Result = { mode: "preview" | "apply"; created: number; updated: number; errors: { rowNumber: number; message: string }[]; columns: string[] };
+type Result = { mode: "preview" | "apply"; created: number; updated: number; errors: { rowNumber: number; message: string }[]; columns: string[]; newCategories?: string[] };
 
 export function ImportTab() {
   const [file, setFile] = useState<File | null>(null);
@@ -44,7 +44,7 @@ export function ImportTab() {
     <p>CATÁLOGO</p>
     <h1>Importar y exportar</h1>
     <small>
-      Subí un Excel (.xlsx) o CSV. La primera fila son los encabezados: SKU, Nombre, Descripción, Categoría, Subcategoría, Marca, Precio efectivo, Precio contado, Disponible, Características (separadas por |), Outlet, Activo.
+      Subí un Excel (.xlsx) o CSV. La primera fila son los encabezados: SKU, Nombre, Descripción, Categoría (con subniveles así: Climatización &gt; Aires acondicionados &gt; Split), Marca, Precio efectivo, Precio contado, Disponible, Características (separadas por |), Outlet, Activo.
       Si el SKU ya existe se actualiza (solo las celdas con valor); si no, se crea. Las imágenes se cargan desde cada artículo.
     </small>
     <input type="file" accept=".xlsx,.csv" onChange={(e) => { setFile(e.target.files?.[0] ?? null); setResult(null); }} />
@@ -54,6 +54,10 @@ export function ImportTab() {
     {error ? <p className="error">{error}</p> : null}
     {result ? <div>
       <p><strong>{result.mode === "apply" ? "Importación terminada" : "Vista previa"}:</strong> {result.created} nuevos, {result.updated} a modificar, {result.errors.length} con error.</p>
+      {result.newCategories && result.newCategories.length > 0 ? <details className="new-categories">
+        <summary>{result.mode === "apply" ? "Se crearon" : "Se van a crear"} {result.newCategories.length} categorías nuevas</summary>
+        <ul>{result.newCategories.slice(0, 200).map((path) => <li key={path}>{path}</li>)}</ul>
+      </details> : null}
       {result.errors.length > 0 ? <ul>{result.errors.slice(0, 200).map((e) => <li key={`${e.rowNumber}-${e.message}`}>Fila {e.rowNumber}: {e.message}</li>)}</ul> : null}
       {result.mode === "preview" && result.created + result.updated > 0 ? <button type="button" disabled={busy} onClick={() => send("apply")}>Confirmar e importar {result.created + result.updated} artículos</button> : null}
     </div> : null}

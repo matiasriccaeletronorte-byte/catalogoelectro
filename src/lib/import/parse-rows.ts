@@ -1,4 +1,6 @@
 import type { ColumnKey } from "./columns";
+import { validCategoryName } from "@/lib/category-tree";
+import { importPathNames } from "./category-path";
 
 export type RawRow = { rowNumber: number; cells: Partial<Record<ColumnKey, unknown>> };
 export type ProductFields = {
@@ -51,6 +53,14 @@ export function parseRows(rows: RawRow[]): { valid: ImportRow[]; errors: RowErro
     const data: Partial<ProductFields> = {};
     let problem = "";
     for (const field of TEXT_FIELDS) if (!isBlank(cells[field])) data[field] = String(cells[field]).trim();
+    if (data.category !== undefined) {
+      const names = importPathNames(data);
+      const bad = (names ?? []).find((name) => !validCategoryName(name));
+      if (!names || names.length === 0) problem = `Categoría inválida: "${data.category}"`;
+      else if (bad !== undefined) problem = `Categoría inválida: "${bad}" (tiene que tener entre 2 y 60 caracteres)`;
+    } else if (data.subCategory !== undefined) {
+      problem = "Trae subcategoría pero no categoría";
+    }
     for (const [field, label] of PRICE_FIELDS) {
       if (isBlank(cells[field])) continue;
       const price = parsePrice(cells[field]);

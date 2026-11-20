@@ -6,7 +6,7 @@ import { JsonLd } from "@/components/json-ld";
 import { parseFilters, serializeFilters } from "@/lib/catalog-filters";
 import { runCatalogQuery } from "@/lib/catalog-query";
 import { findRedirect, loadNodes } from "@/lib/category-store";
-import { categoryHref, legacyCategoryHref, nodePath, resolveSlugs } from "@/lib/category-tree";
+import { categoryHref, findUniqueBySlug, legacyCategoryHref, nodePath, resolveSlugs } from "@/lib/category-tree";
 import { connectDb } from "@/lib/db";
 import { breadcrumbJsonLd } from "@/lib/seo";
 import { siteUrl } from "@/lib/site-url";
@@ -50,7 +50,8 @@ export default async function CatalogPage({ params, searchParams }: { params: Pa
   const node = slugs.length ? resolveSlugs(nodes, slugs) : null;
   if (slugs.length && !node) {
     // la categoría se renombró o se movió: la dirección vieja redirige a la nueva
-    const moved = await findRedirect(slugs.join("/"));
+    const unique = findUniqueBySlug(nodes, slugs[slugs.length - 1]);
+    const moved = (await findRedirect(slugs.join("/"))) ?? (unique ? categoryHref(nodePath(nodes, unique.id)) : null);
     if (moved) {
       const rest = query.toString();
       permanentRedirect(`${moved}${rest ? `?${rest}` : ""}`);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  buildMenuTree, buildTree, canMove, categoryHref, childrenWithCounts, hasCycle, legacyCategoryHref, CategoryNodeData, derivedFields, descendantIds, findByName, formatPath,
+  buildMenuTree, buildTree, canMove, categoryHref, childrenWithCounts, findUniqueByName, findUniqueBySlug, hasCycle, legacyCategoryHref, CategoryNodeData, derivedFields, descendantIds, findByName, formatPath,
   missingPaths, nodePath, normalizeName, parsePathText, productPathText, resolveSlugs, slugify, uniqueSlug, validCategoryName
 } from "./category-tree";
 
@@ -217,5 +217,22 @@ describe("revisión final: nombres y ciclos", () => {
     expect(hasCycle([n("a", "A", "b"), n("b", "B", "a")], "a")).toBe(true);
     expect(hasCycle(sample, "3")).toBe(false);
     expect(hasCycle(sample, "1")).toBe(false);
+  });
+});
+
+describe("enlaces viejos hacia categorías que pasaron a un nivel más profundo", () => {
+  it("legacyCategoryHref encuentra la categoría en cualquier nivel si el nombre es único", () => {
+    expect(legacyCategoryHref(sample, "Split")).toBe("/catalogo/climatizacion/aires-acondicionados/split");
+    expect(legacyCategoryHref(sample, "  aires ACONDICIONADOS ")).toBe("/catalogo/climatizacion/aires-acondicionados");
+  });
+  it("si el nombre se repite en distintas ramas no adivina", () => {
+    const repeated = [...sample, n("9", "Bazar", "1")];
+    expect(legacyCategoryHref(repeated, "Bazar")).toBeNull();
+    expect(findUniqueByName(repeated, "Bazar")).toBeNull();
+  });
+  it("una dirección vieja de un solo segmento se resuelve si la dirección es única", () => {
+    expect(findUniqueBySlug(sample, "split")?.id).toBe("3");
+    expect(findUniqueBySlug(sample, "no-existe")).toBeNull();
+    expect(findUniqueBySlug([...sample, n("9", "Split", "1")], "split")).toBeNull();
   });
 });

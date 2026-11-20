@@ -173,9 +173,23 @@ export function childrenWithCounts(nodes: CategoryNodeData[], parentId: string |
     .map((node) => ({ id: node.id, name: node.name, slug: node.slug, count: counts[node.id] }));
 }
 
-/** Dirección nueva para un enlace viejo `?category=X&subCategory=Y`. `null` si la categoría ya no existe. */
+/** Categoría que se llama así en cualquier nivel del árbol, solo si hay una única (si el nombre se repite en distintas ramas, no se adivina). */
+export function findUniqueByName(nodes: CategoryNodeData[], name: string): CategoryNodeData | null {
+  const key = normalizeName(name);
+  const matches = nodes.filter((node) => normalizeName(node.name) === key);
+  return matches.length === 1 ? matches[0] : null;
+}
+
+/** Categoría con esa dirección en cualquier nivel, solo si es única. Sirve para direcciones viejas que pasaron a un nivel más profundo. */
+export function findUniqueBySlug(nodes: CategoryNodeData[], slug: string): CategoryNodeData | null {
+  const matches = nodes.filter((node) => node.slug === slug);
+  return matches.length === 1 ? matches[0] : null;
+}
+
+/** Dirección nueva para un enlace viejo `?category=X&subCategory=Y`. Busca primero entre las de primer nivel y, si no está, en cualquier nivel. `null` si ya no existe o es ambigua. */
 export function legacyCategoryHref(nodes: CategoryNodeData[], category: string, subCategory = ""): string | null {
-  const root = category.trim() ? findByName(nodes, null, category) : null;
+  if (!category.trim()) return null;
+  const root = findByName(nodes, null, category) ?? findUniqueByName(nodes, category);
   if (!root) return null;
   const sub = subCategory.trim() ? findByName(nodes, root.id, subCategory) : null;
   return categoryHref(nodePath(nodes, (sub ?? root).id));

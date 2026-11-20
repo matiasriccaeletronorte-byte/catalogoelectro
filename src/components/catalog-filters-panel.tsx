@@ -30,10 +30,10 @@ export function CatalogFiltersPanel({ filters, facets, open, onChange, node, suf
     </label>
 
     <p>Categorías</p>
-    {node ? <Link className="facet-back" href={hrefFor(node.pathSlugs.slice(0, -1))}>← {node.pathSlugs.length > 1 ? node.trail[node.trail.length - 2].name : "Todas las categorías"}</Link> : null}
+    {node ? <Link prefetch={false} className="facet-back" href={hrefFor(node.pathSlugs.slice(0, -1))}>← {node.pathSlugs.length > 1 ? node.trail[node.trail.length - 2].name : "Todas las categorías"}</Link> : null}
     {node ? <b className="facet-current">{node.name}</b> : null}
     {facets?.categoryChildren.map((child) => (
-      <Link key={child.id} className="facet-sub-link" href={hrefFor([...(node?.pathSlugs ?? []), child.slug])}>{child.name}<span>{child.count}</span></Link>
+      <Link prefetch={false} key={child.id} className="facet-sub-link" href={hrefFor([...(node?.pathSlugs ?? []), child.slug])}>{child.name}<span>{child.count}</span></Link>
     ))}
     {legacy ? <>
       {filters.category ? <button type="button" className="facet-back" onClick={() => onChange({ category: "", subCategory: "" })}>← Todas las categorías</button> : null}

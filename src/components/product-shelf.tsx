@@ -18,7 +18,7 @@ export function ProductShelf({ eyebrow, title, href, items }: { eyebrow: string;
   return <section className="offers product-shelf">
     <div className="section-head offers-head">
       <div><h2>{title}</h2></div>
-      <Link href={href} className="catalog-reset">Ver todos</Link>
+      <Link prefetch={false} href={href} className="catalog-reset">Ver todos</Link>
     </div>
     <div className="shelf-wrap">
       <button type="button" className="shelf-arrow previous" onClick={() => scroll(-1)} aria-label="Anteriores">‹</button>

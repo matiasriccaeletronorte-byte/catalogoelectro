@@ -71,7 +71,7 @@ export function CategoryMenu({ menu }: { menu: MenuNode[] }) {
     {open ? <div className={`menu-panel${current ? " has-sub" : ""}`} id="category-menu-panel">
       <div className="menu-roots" onKeyDown={onListKey} onMouseLeave={() => window.clearTimeout(timer.current)}>
         {menu.map((item) => item.children.length === 0
-          ? <Link key={item.id} href={item.href} className="menu-root" onClick={() => close()}>{item.name}</Link>
+          ? <Link prefetch={false} key={item.id} href={item.href} className="menu-root" onClick={() => close()}>{item.name}</Link>
           : <button key={item.id} type="button" className={`menu-root${active === item.id ? " active" : ""}`} aria-expanded={active === item.id} onMouseEnter={() => hover(item.id)} onClick={() => setActive(item.id)}>
               <span>{item.name}</span><em aria-hidden="true">›</em>
             </button>)}
@@ -80,13 +80,13 @@ export function CategoryMenu({ menu }: { menu: MenuNode[] }) {
         <button type="button" className="menu-back" onClick={() => setActive(null)}>← Volver</button>
         <div className="menu-sub-head">
           <h3>{current.name}</h3>
-          <Link href={current.href} className="menu-all" onClick={() => close()}>Ver todo</Link>
+          <Link prefetch={false} href={current.href} className="menu-all" onClick={() => close()}>Ver todo</Link>
         </div>
         <div className="menu-cols">
           {current.children.map((child) => <div className="menu-col" key={child.id}>
-            <Link href={child.href} className="menu-col-title" onClick={() => close()}>{child.name}</Link>
-            {child.children.map((leaf) => <Link key={leaf.id} href={leaf.href} onClick={() => close()}>{leaf.name}</Link>)}
-            {child.children.length > 0 ? <Link href={child.href} className="menu-col-all" onClick={() => close()}>Ver todo</Link> : null}
+            <Link prefetch={false} href={child.href} className="menu-col-title" onClick={() => close()}>{child.name}</Link>
+            {child.children.map((leaf) => <Link prefetch={false} key={leaf.id} href={leaf.href} onClick={() => close()}>{leaf.name}</Link>)}
+            {child.children.length > 0 ? <Link prefetch={false} href={child.href} className="menu-col-all" onClick={() => close()}>Ver todo</Link> : null}
           </div>)}
         </div>
       </div> : null}

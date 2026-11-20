@@ -26,7 +26,7 @@ Hoy cada artículo tiene `category` y `subCategory` (dos niveles). Se necesita u
 
 **Nueva colección `categorynodes`** (modelo `CategoryNode`):
 - `name` (texto), `slug` (texto), `parentId` (ObjectId o `null` para primer nivel).
-- `slug` = nombre sin tildes, en minúsculas, con guiones; único entre hermanos (si choca se agrega `-2`). Palabras reservadas no permitidas como primer nivel: `api`, `admin`.
+- `slug` = nombre sin tildes, en minúsculas, con guiones; único entre hermanos (si choca se agrega `-2`).
 - Únicos por `(parentId, slug)` y por `(parentId, nombre sin tildes ni mayúsculas)`.
 
 **`Product` agrega:**

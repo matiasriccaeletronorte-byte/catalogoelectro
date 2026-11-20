@@ -14,7 +14,7 @@ Hoy cada artículo tiene `category` y `subCategory` (dos niveles). Se necesita u
 - Un artículo pertenece a **una sola** categoría del árbol. Al mirar un nivel superior se ve todo lo que hay debajo.
 - Direcciones **por camino**: `/catalogo/climatizacion/aires-acondicionados/split`. Los enlaces viejos `?category=…` redirigen.
 - El **árbol inicial lo arma Claude** a partir de las 28 categorías actuales (hoy sin subcategorías); el usuario lo revisa con cantidades por rama **antes** de aplicarlo y lo corrige desde el admin.
-- Menú "Categorías" con panel de dos zonas (ver §8). **No se cambia la paleta**: la categoría activa va en el rojo de marca.
+- Menú "Categorías" con panel de dos zonas (ver §10). **No se cambia la paleta**: la categoría activa va en el rojo de marca.
 
 ## 3. Alcance
 

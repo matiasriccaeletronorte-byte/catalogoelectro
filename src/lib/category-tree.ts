@@ -22,7 +22,8 @@ export function uniqueSlug(base: string, taken: Iterable<string>): string {
 
 export function validCategoryName(name: string): boolean {
   const clean = name.replace(/\s+/g, " ").trim();
-  return clean.length >= 2 && clean.length <= 60;
+  // el ">" separa los niveles en el Excel: un nombre con ">" se partiría en varias categorías al reimportar
+  return clean.length >= 2 && clean.length <= 60 && !clean.includes(">");
 }
 
 const isOthers = (name: string) => normalizeName(name) === "otros";
@@ -59,18 +60,35 @@ export function nodePath(nodes: CategoryNodeData[], id: string): CategoryNodeDat
   return path;
 }
 
-/** Todos los descendientes de un nodo, sin incluir el propio nodo. */
+/** Todos los descendientes de un nodo, sin incluir el propio nodo. Tolera datos con ciclos (no se queda dando vueltas). */
 export function descendantIds(nodes: CategoryNodeData[], id: string): string[] {
   const children = new Map<string, string[]>();
   for (const node of nodes) if (node.parentId) children.set(node.parentId, [...(children.get(node.parentId) ?? []), node.id]);
+  const seen = new Set<string>([id]);
   const out: string[] = [];
   const stack = [...(children.get(id) ?? [])];
   while (stack.length > 0) {
     const next = stack.pop()!;
+    if (seen.has(next)) continue;
+    seen.add(next);
     out.push(next);
     stack.push(...(children.get(next) ?? []));
   }
   return out;
+}
+
+/** El nodo es su propio ancestro (por ejemplo, dos personas mueven categorías a la vez). */
+export function hasCycle(nodes: CategoryNodeData[], id: string): boolean {
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  const seen = new Set<string>();
+  let current = byId.get(id);
+  while (current && current.parentId) {
+    if (seen.has(current.id)) return true;
+    seen.add(current.id);
+    current = byId.get(current.parentId);
+    if (current && current.id === id) return true;
+  }
+  return false;
 }
 
 /** Se puede mover un nodo a otro padre (o a primer nivel con `null`) mientras no sea dentro de sí mismo ni de sus descendientes. */

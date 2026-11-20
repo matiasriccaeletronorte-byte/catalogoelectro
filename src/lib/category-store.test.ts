@@ -2,10 +2,13 @@ import mongoose from "mongoose";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { CategoryModel } from "@/models/Category";
 import { CategoryNodeModel } from "@/models/CategoryNode";
+import { CategoryRedirectModel } from "@/models/CategoryRedirect";
+import { hasCycle } from "./category-tree";
+import { Types } from "mongoose";
 import { ProductModel } from "@/models/Product";
 import {
   categoryFieldsFor, CategoryError, convertLegacy, countsByNode, createNode, deleteNode, ensurePath, legacyProductCount,
-  loadNodes, moveNode, moveProducts, renameNode
+  findRedirect, loadNodes, moveNode, moveProducts, productUpdateOps, renameNode
 } from "./category-store";
 
 // Prueba de integración: usa una base de pruebas en MongoDB local. Si no hay Mongo, se omite.
@@ -15,7 +18,7 @@ let available = false;
 beforeAll(async () => {
   try {
     await mongoose.connect(uri, { serverSelectionTimeoutMS: 1500 });
-    await Promise.all([ProductModel.syncIndexes(), CategoryNodeModel.syncIndexes()]);
+    await Promise.all([ProductModel.syncIndexes(), CategoryNodeModel.syncIndexes(), CategoryRedirectModel.syncIndexes()]);
     available = true;
   } catch {
     available = false;
@@ -23,7 +26,7 @@ beforeAll(async () => {
 });
 afterAll(async () => { if (available) { await clean(); await mongoose.disconnect(); } });
 beforeEach(async () => { if (available) await clean(); });
-async function clean() { await Promise.all([ProductModel.deleteMany({}), CategoryNodeModel.deleteMany({}), CategoryModel.deleteMany({})]); }
+async function clean() { await Promise.all([ProductModel.deleteMany({}), CategoryNodeModel.deleteMany({}), CategoryModel.deleteMany({}), CategoryRedirectModel.deleteMany({})]); }
 
 let counter = 0;
 async function product(fields: Record<string, unknown> = {}) {
@@ -213,5 +216,73 @@ describe("convertLegacy", () => {
 describe("CategoryError", () => {
   it("lleva el código", () => {
     expect(new CategoryError("cycle", "x").code).toBe("cycle");
+  });
+});
+
+describe("revisión final: carreras, direcciones viejas y reparación", () => {
+  it("ensurePath en paralelo con el mismo camino no falla ni duplica", async (ctx) => {
+    if (!available) return ctx.skip();
+    const results = await Promise.all(Array.from({ length: 5 }, () => ensurePath(["Climatización", "Aires", "Split"])));
+    expect(new Set(results.map((path) => path[2].id)).size).toBe(1);
+    expect(await loadNodes()).toHaveLength(3);
+  });
+  it("crear el mismo nombre dos veces a la vez da 'duplicado', no un error del servidor", async (ctx) => {
+    if (!available) return ctx.skip();
+    const results = await Promise.allSettled([createNode(null, "Hogar"), createNode(null, "Hogar")]);
+    const failed = results.filter((r): r is PromiseRejectedResult => r.status === "rejected");
+    expect(failed).toHaveLength(1);
+    expect(failed[0].reason).toMatchObject({ code: "duplicate" });
+  });
+  it("renombrar deja una redirección desde la dirección vieja", async (ctx) => {
+    if (!available) return ctx.skip();
+    const root = await createNode(null, "Climatización");
+    const child = await createNode(root.id, "Aires");
+    await renameNode(child.id, "Aire acondicionado");
+    expect(await findRedirect("climatizacion/aires")).toBe("/catalogo/climatizacion/aire-acondicionado");
+  });
+  it("mover una rama redirige las direcciones viejas de toda la rama", async (ctx) => {
+    if (!available) return ctx.skip();
+    const clima = await createNode(null, "Climatización");
+    const hogar = await createNode(null, "Hogar");
+    const aires = await createNode(clima.id, "Aires");
+    await createNode(aires.id, "Split");
+    await moveNode(aires.id, hogar.id);
+    expect(await findRedirect("climatizacion/aires")).toBe("/catalogo/hogar/aires");
+    expect(await findRedirect("climatizacion/aires/split")).toBe("/catalogo/hogar/aires/split");
+  });
+  it("sin historial, o si la categoría se borró, no hay redirección", async (ctx) => {
+    if (!available) return ctx.skip();
+    expect(await findRedirect("no/existe")).toBeNull();
+    const root = await createNode(null, "Hogar");
+    const child = await createNode(root.id, "Bazar");
+    await renameNode(child.id, "Vajilla");
+    await deleteNode(child.id);
+    expect(await findRedirect("hogar/bazar")).toBeNull();
+  });
+  it("mover a la misma ubicación repara artículos desactualizados", async (ctx) => {
+    if (!available) return ctx.skip();
+    const a = await createNode(null, "Climatización");
+    const b = await createNode(a.id, "Aires");
+    const p = await assign(b.id, ["x"]);
+    await ProductModel.updateOne({ _id: p._id }, { $set: { category: "Viejo", categoryPath: [] } });
+    await moveNode(b.id, a.id);
+    const fixed = await ProductModel.findById(p._id).lean() as unknown as { category: string; categoryPath: unknown[] };
+    expect(fixed.category).toBe("Climatización");
+    expect(fixed.categoryPath).toHaveLength(2);
+  });
+  it("dos movimientos cruzados a la vez no dejan un ciclo", async (ctx) => {
+    if (!available) return ctx.skip();
+    const a = await createNode(null, "Alfa");
+    const b = await createNode(null, "Beta");
+    await Promise.allSettled([moveNode(a.id, b.id), moveNode(b.id, a.id)]);
+    const nodes = await loadNodes();
+    expect(hasCycle(nodes, a.id)).toBe(false);
+    expect(hasCycle(nodes, b.id)).toBe(false);
+  });
+  it("la actualización de un artículo exige que siga en la categoría que se leyó", () => {
+    const leaf = new Types.ObjectId();
+    const read = new Types.ObjectId();
+    const ops = productUpdateOps([{ _id: new Types.ObjectId(), sku: "S", name: "N", brand: "", categoryId: read }], [{ id: String(leaf), name: "A", slug: "a", parentId: null }]);
+    expect(ops[0].updateOne.filter).toMatchObject({ categoryId: read });
   });
 });

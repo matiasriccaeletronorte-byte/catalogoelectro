@@ -5,7 +5,7 @@ import { Catalog, type CatalogNode } from "@/components/catalog";
 import { JsonLd } from "@/components/json-ld";
 import { parseFilters, serializeFilters } from "@/lib/catalog-filters";
 import { runCatalogQuery } from "@/lib/catalog-query";
-import { loadNodes } from "@/lib/category-store";
+import { findRedirect, loadNodes } from "@/lib/category-store";
 import { categoryHref, legacyCategoryHref, nodePath, resolveSlugs } from "@/lib/category-tree";
 import { connectDb } from "@/lib/db";
 import { breadcrumbJsonLd } from "@/lib/seo";
@@ -48,7 +48,15 @@ export default async function CatalogPage({ params, searchParams }: { params: Pa
   await connectDb();
   const nodes = await loadNodes();
   const node = slugs.length ? resolveSlugs(nodes, slugs) : null;
-  if (slugs.length && !node) notFound();
+  if (slugs.length && !node) {
+    // la categoría se renombró o se movió: la dirección vieja redirige a la nueva
+    const moved = await findRedirect(slugs.join("/"));
+    if (moved) {
+      const rest = query.toString();
+      permanentRedirect(`${moved}${rest ? `?${rest}` : ""}`);
+    }
+    notFound();
+  }
 
   // enlaces viejos ?category=… → dirección por camino (si la categoría ya existe en el árbol)
   const legacyName = (query.get("category") ?? "").trim();

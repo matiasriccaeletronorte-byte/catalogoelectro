@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  buildMenuTree, buildTree, canMove, categoryHref, childrenWithCounts, legacyCategoryHref, CategoryNodeData, derivedFields, descendantIds, findByName, formatPath,
+  buildMenuTree, buildTree, canMove, categoryHref, childrenWithCounts, hasCycle, legacyCategoryHref, CategoryNodeData, derivedFields, descendantIds, findByName, formatPath,
   missingPaths, nodePath, normalizeName, parsePathText, productPathText, resolveSlugs, slugify, uniqueSlug, validCategoryName
 } from "./category-tree";
 
@@ -201,5 +201,21 @@ describe("legacyCategoryHref", () => {
   it("categoría desconocida o vacía da null", () => {
     expect(legacyCategoryHref(sample, "No existe")).toBeNull();
     expect(legacyCategoryHref(sample, "  ")).toBeNull();
+  });
+});
+
+describe("revisión final: nombres y ciclos", () => {
+  it("un nombre no puede llevar el signo > (rompería los caminos del Excel)", () => {
+    expect(validCategoryName("TV > Audio")).toBe(false);
+    expect(validCategoryName("TV, audio y tecnología")).toBe(true);
+  });
+  it("descendantIds termina aunque los datos tengan un ciclo", () => {
+    const cyclic = [n("a", "A", "b"), n("b", "B", "a")];
+    expect(descendantIds(cyclic, "a")).toEqual(["b"]);
+  });
+  it("hasCycle detecta un nodo que es su propio ancestro", () => {
+    expect(hasCycle([n("a", "A", "b"), n("b", "B", "a")], "a")).toBe(true);
+    expect(hasCycle(sample, "3")).toBe(false);
+    expect(hasCycle(sample, "1")).toBe(false);
   });
 });

@@ -1,10 +1,11 @@
 import { Types } from "mongoose";
 import {
-  canMove, CategoryNodeData, derivedFields, descendantIds, findByName, nodePath, normalizeName, slugify, uniqueSlug, validCategoryName
+  canMove, categoryHref, CategoryNodeData, derivedFields, descendantIds, findByName, hasCycle, nodePath, normalizeName, slugify, uniqueSlug, validCategoryName
 } from "@/lib/category-tree";
 import { searchTextOf } from "@/lib/product-schema";
 import { CategoryModel } from "@/models/Category";
 import { CategoryNodeModel } from "@/models/CategoryNode";
+import { CategoryRedirectModel } from "@/models/CategoryRedirect";
 import { ProductModel } from "@/models/Product";
 
 export class CategoryError extends Error {
@@ -24,27 +25,41 @@ export async function loadNodes(): Promise<CategoryNodeData[]> {
 
 export async function createNode(parentId: string | null, rawName: string): Promise<CategoryNodeData> {
   const name = cleanName(rawName);
-  if (!validCategoryName(name)) throw new CategoryError("invalid", "El nombre tiene que tener entre 2 y 60 caracteres.");
+  if (!validCategoryName(name)) throw new CategoryError("invalid", "El nombre tiene que tener entre 2 y 60 caracteres y no puede incluir el signo >.");
   const nodes = await loadNodes();
   if (parentId && !nodes.some((node) => node.id === parentId)) throw new CategoryError("not_found", "La categoría padre no existe.");
   if (findByName(nodes, parentId, name)) throw new CategoryError("duplicate", "Ya existe una categoría con ese nombre en ese nivel.");
   const slug = uniqueSlug(slugify(name), nodes.filter((node) => node.parentId === parentId).map((node) => node.slug));
-  const doc = await CategoryNodeModel.create({ name, slug, nameKey: normalizeName(name), parentId: parentId ? new Types.ObjectId(parentId) : null });
-  return toData(doc.toObject() as unknown as Row);
+  try {
+    const doc = await CategoryNodeModel.create({ name, slug, nameKey: normalizeName(name), parentId: parentId ? new Types.ObjectId(parentId) : null });
+    return toData(doc.toObject() as unknown as Row);
+  } catch (error) {
+    // dos pedidos a la vez con el mismo nombre: gana uno y el otro recibe el aviso de duplicado
+    if ((error as { code?: number }).code === 11000) throw new CategoryError("duplicate", "Ya existe una categoría con ese nombre en ese nivel.");
+    throw error;
+  }
+}
+
+type ProductRow = { _id: Types.ObjectId; sku?: string; name?: string; brand?: string; categoryId?: Types.ObjectId | null };
+
+/** Actualizaciones de categoría para un grupo de artículos. Cada una exige que el artículo siga en la categoría que se leyó: si alguien lo cambió mientras tanto, no se lo pisa. */
+export function productUpdateOps(rows: ProductRow[], path: CategoryNodeData[]) {
+  const { category, subCategory } = derivedFields(path);
+  const ids = path.map((node) => new Types.ObjectId(node.id));
+  const leaf = ids[ids.length - 1];
+  return rows.map((row) => ({
+    updateOne: {
+      filter: { _id: row._id, categoryId: row.categoryId ?? null },
+      update: { $set: { categoryId: leaf, categoryPath: ids, category, subCategory, searchText: searchTextOf({ ...row, category, subCategory }) } }
+    }
+  }));
 }
 
 /** Pone categoría, camino y copias derivadas (y el texto de búsqueda) a los artículos que cumplan el filtro. */
 async function setProductsCategory(filter: Record<string, unknown>, path: CategoryNodeData[]): Promise<number> {
   if (path.length === 0) return 0;
-  const { category, subCategory } = derivedFields(path);
-  const ids = path.map((node) => new Types.ObjectId(node.id));
-  const leaf = ids[ids.length - 1];
-  const rows = (await ProductModel.find(filter).select("sku name brand").lean()) as unknown as { _id: Types.ObjectId; sku?: string; name?: string; brand?: string }[];
-  for (let i = 0; i < rows.length; i += 1000) {
-    await ProductModel.bulkWrite(rows.slice(i, i + 1000).map((row) => ({
-      updateOne: { filter: { _id: row._id }, update: { $set: { categoryId: leaf, categoryPath: ids, category, subCategory, searchText: searchTextOf({ ...row, category, subCategory }) } } }
-    })));
-  }
+  const rows = (await ProductModel.find(filter).select("sku name brand categoryId").lean()) as unknown as ProductRow[];
+  for (let i = 0; i < rows.length; i += 1000) await ProductModel.bulkWrite(productUpdateOps(rows.slice(i, i + 1000), path));
   return rows.length;
 }
 
@@ -54,17 +69,38 @@ async function recomputeBranch(nodeId: string): Promise<void> {
   for (const id of [nodeId, ...descendantIds(nodes, nodeId)]) await setProductsCategory({ categoryId: id }, nodePath(nodes, id));
 }
 
+const slugPath = (nodes: CategoryNodeData[], id: string) => nodePath(nodes, id).map((node) => node.slug).join("/");
+const branchPaths = (nodes: CategoryNodeData[], id: string) => [id, ...descendantIds(nodes, id)].map((nodeId) => ({ id: nodeId, path: slugPath(nodes, nodeId) }));
+
+/** Guarda las direcciones viejas de una rama que cambió de camino, para redirigirlas en vez de dar 404. */
+async function recordRedirects(before: { id: string; path: string }[]): Promise<void> {
+  const nodes = await loadNodes();
+  for (const { id, path } of before) {
+    if (path && path !== slugPath(nodes, id)) await CategoryRedirectModel.updateOne({ fromPath: path }, { $set: { nodeId: new Types.ObjectId(id) } }, { upsert: true });
+  }
+}
+
+/** Dirección actual a la que lleva una dirección vieja (`climatizacion/aires`), o `null` si no hay historial o la categoría ya no existe. */
+export async function findRedirect(fromPath: string): Promise<string | null> {
+  const doc = (await CategoryRedirectModel.findOne({ fromPath }).lean()) as { nodeId: Types.ObjectId } | null;
+  if (!doc) return null;
+  const path = nodePath(await loadNodes(), String(doc.nodeId));
+  return path.length > 0 ? categoryHref(path) : null;
+}
+
 export async function renameNode(id: string, rawName: string): Promise<void> {
   const name = cleanName(rawName);
-  if (!validCategoryName(name)) throw new CategoryError("invalid", "El nombre tiene que tener entre 2 y 60 caracteres.");
+  if (!validCategoryName(name)) throw new CategoryError("invalid", "El nombre tiene que tener entre 2 y 60 caracteres y no puede incluir el signo >.");
   const nodes = await loadNodes();
   const node = nodes.find((item) => item.id === id);
   if (!node) throw new CategoryError("not_found", "La categoría no existe.");
   const clash = findByName(nodes, node.parentId, name);
   if (clash && clash.id !== id) throw new CategoryError("duplicate", "Ya existe una categoría con ese nombre en ese nivel.");
   const slug = uniqueSlug(slugify(name), nodes.filter((item) => item.parentId === node.parentId && item.id !== id).map((item) => item.slug));
+  const before = branchPaths(nodes, id);
   await CategoryNodeModel.updateOne({ _id: id }, { $set: { name, slug, nameKey: normalizeName(name) } });
   await recomputeBranch(id);
+  await recordRedirects(before);
 }
 
 export async function moveNode(id: string, newParentId: string | null): Promise<void> {
@@ -72,12 +108,19 @@ export async function moveNode(id: string, newParentId: string | null): Promise<
   const node = nodes.find((item) => item.id === id);
   if (!node) throw new CategoryError("not_found", "La categoría no existe.");
   if (!canMove(nodes, id, newParentId)) throw new CategoryError("cycle", "No se puede mover una categoría dentro de sí misma ni de sus subcategorías.");
-  if (node.parentId === newParentId) return;
   const clash = findByName(nodes, newParentId, node.name);
   if (clash && clash.id !== id) throw new CategoryError("duplicate", "El destino ya tiene una categoría con ese nombre.");
   const slug = uniqueSlug(node.slug, nodes.filter((item) => item.parentId === newParentId && item.id !== id).map((item) => item.slug));
+  const before = branchPaths(nodes, id);
   await CategoryNodeModel.updateOne({ _id: id }, { $set: { parentId: newParentId ? new Types.ObjectId(newParentId) : null, slug } });
+  // si dos personas movieron categorías a la vez y quedó un ciclo, se deshace este movimiento
+  if (hasCycle(await loadNodes(), id)) {
+    await CategoryNodeModel.updateOne({ _id: id }, { $set: { parentId: node.parentId ? new Types.ObjectId(node.parentId) : null, slug: node.slug } });
+    throw new CategoryError("cycle", "Otra persona movió categorías al mismo tiempo. Recargá y probá de nuevo.");
+  }
+  // se recalcula siempre, también al "mover" a la misma ubicación: sirve para reparar artículos desactualizados
   await recomputeBranch(id);
+  await recordRedirects(before);
 }
 
 export async function deleteNode(id: string): Promise<void> {
@@ -104,8 +147,17 @@ export async function ensurePath(names: string[], known?: CategoryNodeData[]): P
   for (const name of names) {
     let node = findByName(nodes, parentId, name);
     if (!node) {
-      node = await createNode(parentId, name);
-      nodes.push(node);
+      try {
+        node = await createNode(parentId, name);
+        nodes.push(node);
+      } catch (error) {
+        // otra persona o importación la creó justo antes: se usa esa
+        if (!(error instanceof CategoryError) || error.code !== "duplicate") throw error;
+        const fresh = await loadNodes();
+        node = findByName(fresh, parentId, name);
+        if (!node) throw error;
+        nodes.splice(0, nodes.length, ...fresh);
+      }
     }
     path.push(node);
     parentId = node.id;

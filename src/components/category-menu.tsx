@@ -12,6 +12,7 @@ export function CategoryMenu({ menu }: { menu: MenuNode[] }) {
   const box = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const timer = useRef<number | undefined>(undefined);
+  const lastRoot = useRef<string | null>(null);
 
   const close = useCallback((restoreFocus = false) => {
     window.clearTimeout(timer.current);
@@ -39,6 +40,18 @@ export function CategoryMenu({ menu }: { menu: MenuNode[] }) {
     document.addEventListener("keydown", onKey);
     return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
   }, [open, close]);
+
+  // en celular, al entrar a una categoría la lista se oculta: el foco pasa a "Volver" y, al volver, regresa a la categoría
+  useEffect(() => {
+    if (!open || window.matchMedia(DESKTOP).matches) return;
+    if (active) {
+      lastRoot.current = active;
+      box.current?.querySelector<HTMLElement>(".menu-back")?.focus();
+    } else if (lastRoot.current) {
+      box.current?.querySelector<HTMLElement>(`[data-root="${lastRoot.current}"]`)?.focus();
+      lastRoot.current = null;
+    }
+  }, [active, open]);
 
   if (menu.length === 0) return null;
   const current = menu.find((item) => item.id === active) ?? null;
@@ -72,7 +85,7 @@ export function CategoryMenu({ menu }: { menu: MenuNode[] }) {
       <div className="menu-roots" onKeyDown={onListKey} onMouseLeave={() => window.clearTimeout(timer.current)}>
         {menu.map((item) => item.children.length === 0
           ? <Link prefetch={false} key={item.id} href={item.href} className="menu-root" onClick={() => close()}>{item.name}</Link>
-          : <button key={item.id} type="button" className={`menu-root${active === item.id ? " active" : ""}`} aria-expanded={active === item.id} onMouseEnter={() => hover(item.id)} onClick={() => setActive(item.id)}>
+          : <button key={item.id} type="button" data-root={item.id} className={`menu-root${active === item.id ? " active" : ""}`} aria-expanded={active === item.id} onMouseEnter={() => hover(item.id)} onClick={() => setActive(item.id)}>
               <span>{item.name}</span><em aria-hidden="true">›</em>
             </button>)}
       </div>

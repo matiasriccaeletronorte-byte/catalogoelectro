@@ -50,7 +50,7 @@ Hoy cada artículo tiene `category` y `subCategory` (dos niveles). Se necesita u
 ## 6. Migración y árbol inicial
 
 - **Conversión de lo actual:** operación idempotente `convertirCategoriasPlanas`: crea un nodo de primer nivel por cada `category` distinta, asigna `categoryId`/`categoryPath` a cada artículo y migra las subcategorías guardadas (hoy ninguna). En el admin aparece un aviso "Convertir las categorías actuales al nuevo árbol" mientras haya artículos sin `categoryId`. No corre sola en pedidos públicos.
-- **Árbol inicial (lo arma Claude):** archivo `scripts/arbol-categorias.json` con las reglas que agrupan las 28 categorías en ~8 a 10 principales y bajan un nivel donde hay volumen (por palabras del nombre: Split, Portátil, Ventana…). Un script `scripts/migrar-categorias.mjs` muestra el árbol propuesto con cantidades por rama (**vista previa por defecto**) y solo escribe con `--aplicar`.
+- **Árbol inicial (lo arma Claude):** `scripts/arbol-categorias.mjs` agrupa las 28 categorías en ~10 principales y baja un nivel más en los aires acondicionados (Split, Portátil, Ventana, por palabras del nombre). El convertidor de Contabilium escribe los caminos en el Excel y **muestra el árbol propuesto con cantidades por rama en el informe, antes de importar**. Se aplica importando el Excel (vista previa primero); después el usuario lo corrige desde el admin.
 - **Producción:** Claude no accede a la base de la nube. El árbol llega por el Excel (el convertidor de Contabilium escribe los caminos y la importación crea los nodos y reasigna los artículos por SKU) más el botón de conversión del admin.
 - **Criterio de aceptación de la migración:** 0 artículos sin `categoryId` y el total de artículos antes = después.
 

@@ -3,6 +3,7 @@
 // Solo importa artículos con precio y stock mayores a 0. Marca y categoría salen del nombre.
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import ExcelJS from "exceljs";
+import { rutaDe } from "./arbol-categorias.mjs";
 
 const DIR = "datos-contabilium";
 const argIndex = process.argv.indexOf("--descuento-efectivo");
@@ -86,6 +87,22 @@ function categoryOf(upperName, firstWord) {
   return "Otros";
 }
 
+/** Líneas del árbol con cantidades acumuladas por rama. */
+function arbolLineas(rows) {
+  const conteo = new Map();
+  for (const row of rows) {
+    const partes = row.category.split(" > ");
+    for (let largo = 1; largo <= partes.length; largo++) {
+      const clave = partes.slice(0, largo).join(" > ");
+      conteo.set(clave, (conteo.get(clave) ?? 0) + 1);
+    }
+  }
+  return [...conteo.keys()].sort((a, b) => a.localeCompare(b, "es")).map((clave) => {
+    const partes = clave.split(" > ");
+    return `${"  ".repeat(partes.length)}${partes[partes.length - 1]}: ${conteo.get(clave)}`;
+  });
+}
+
 async function main() {
   const all = JSON.parse(await readFile(`${DIR}/articulos.json`, "utf8"));
   const MIN_PRICE = 500; // por debajo son artículos internos (gift card, gastos, "...DE OFERTA" a $1)
@@ -107,11 +124,12 @@ async function main() {
     const brand = isBrand(first) ? titleCase(first) : "";
     const rawUpper = a.Nombre.toUpperCase();
     const category = categoryOf(rawUpper, rawUpper.trim().split(/\s+/)[0] ?? "");
+    const ruta = rutaDe(category, name).join(" > ");
     const contado = money(a.PrecioFinal);
     const efectivo = money(a.PrecioFinal * (1 - DESCUENTO / 100));
     const shown = titleCase(name).slice(0, 200);
-    rows.push({ sku: a.Codigo.trim(), name: shown, description: (a.Descripcion ?? "").trim(), category, brand, efectivo, contado, features: features.join(" | "), outlet: outlet ? "sí" : "no" });
-    stats.categorias.set(category, (stats.categorias.get(category) ?? 0) + 1);
+    rows.push({ sku: a.Codigo.trim(), name: shown, description: (a.Descripcion ?? "").trim(), category: ruta, brand, efectivo, contado, features: features.join(" | "), outlet: outlet ? "sí" : "no" });
+    stats.categorias.set(ruta, (stats.categorias.get(ruta) ?? 0) + 1);
     if (brand) stats.marcas.set(brand, (stats.marcas.get(brand) ?? 0) + 1);
     if (category === "Otros") stats.otros.push(shown);
   }
@@ -133,7 +151,7 @@ async function main() {
   const report = [
     `Artículos en Contabilium: ${all.length}`, `Se importan: ${rows.length}`, `Omitidos por precio 0: ${noPrice}`, `Omitidos por sin stock: ${noStock}`, `Omitidos por precio menor a $${MIN_PRICE} (artículos internos): ${internal.length}`,
     `Descuento del precio en efectivo: ${DESCUENTO}% (contado = PrecioFinal de Contabilium)`, `Marcados como outlet: ${rows.filter((r) => r.outlet === "sí").length}`, "",
-    "CATEGORÍAS", ...sorted(stats.categorias).map(([k, v]) => `  ${k}: ${v}`), "",
+    "ÁRBOL PROPUESTO (cantidad de artículos por rama, incluye lo que hay debajo)", ...arbolLineas(rows), "",
     `MARCAS (${stats.marcas.size})`, ...sorted(stats.marcas).map(([k, v]) => `  ${k}: ${v}`), "",
     `SIN CATEGORÍA (${stats.otros.length})`, ...stats.otros.map((n) => `  ${n}`), "", `OMITIDOS POR PRECIO BAJO (${internal.length})`, ...internal.map((a) => `  ${a.Codigo} | ${a.Nombre} | $${a.PrecioFinal}`)
   ].join("\n");

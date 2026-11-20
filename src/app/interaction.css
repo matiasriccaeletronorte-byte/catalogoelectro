@@ -279,6 +279,8 @@ input[type="checkbox"],input[type="radio"]{accent-color:var(--brand)}
 
 /* Carrusel: todo adentro de la imagen, con flechas y unos 400 px de alto */
 .hero-carousel.hero-carousel-wide{position:relative;display:block;padding:0;min-height:0;height:clamp(200px,30vw,440px);overflow:hidden;background:#1f2328;border-bottom:0}
+/* En PC el banner ocupa todo el ancho y tiene la proporción de la imagen de escritorio (2400 × 440): se ve entera, sin recortes */
+@media(min-width:621px){.hero-carousel.hero-carousel-wide{height:auto;min-height:140px;aspect-ratio:2400/440}}
 .hero-carousel.hero-carousel-wide .hero-carousel-media{position:absolute;inset:0;width:100%;height:100%;max-height:none;aspect-ratio:auto;margin:0}
 .hero-carousel.hero-carousel-wide .hero-carousel-media img{position:absolute;inset:0;width:100%;height:100%}
 .hero-carousel-media .hero-main{object-fit:cover;object-position:center}

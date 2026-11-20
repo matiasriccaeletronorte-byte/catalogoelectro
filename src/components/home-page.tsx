@@ -12,6 +12,7 @@ import { useSiteSettings } from "./site-settings-provider";
 import { ProductCard } from "@/components/product-card";
 import { Product } from "@/lib/types";
 import { normalizeImageUrl } from "@/lib/image-url";
+import { branchLocation, branchMapQuery } from "@/lib/branch-contact";
 
 const defaultSlides = [
   {
@@ -216,12 +217,12 @@ export function HomePage({ shelves, categoryTiles, homepage, featured }: { shelv
             <h2>{branch.name}</h2>
             <div className="location-contact">
               <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(branch.query || `${branch.name} ${branch.city}`)}`}
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(branchMapQuery(branch))}`}
                 target="_blank"
                 rel="noreferrer"
                 className="location-link"
               >
-                {branch.city}
+                {branchLocation(branch)}
               </a>
               <a className="location-phone location-whatsapp" href={`https://wa.me/${branch.whatsapp}`} target="_blank" rel="noreferrer" aria-label={`Escribir por WhatsApp a ${branch.name}`}>
                 <span aria-hidden="true">◉</span> WhatsApp: {branch.phone}
@@ -230,7 +231,7 @@ export function HomePage({ shelves, categoryTiles, homepage, featured }: { shelv
             <div className="location-map">
               <iframe
                 title={branch.name}
-                src={`https://www.google.com/maps?q=${encodeURIComponent(branch.query || `${branch.name} ${branch.city}`)}&output=embed`}
+                src={`https://www.google.com/maps?q=${encodeURIComponent(branchMapQuery(branch))}&output=embed`}
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
               />

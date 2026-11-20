@@ -3,16 +3,17 @@
 import { FormEvent, useEffect } from "react";
 import { acceptsCoupon, buildCartMessage, buildCartUrl, cartTotals, couponBaseTotals, totalsWithCoupon } from "@/lib/cart";
 import { describeCoupon } from "@/lib/coupons";
+import { branchLocation, phoneDigits } from "@/lib/branch-contact";
 import { normalizeImageUrl } from "@/lib/image-url";
 import { ImagePlaceholder } from "./image-placeholder";
+import { useBranch } from "./branch-provider";
 import { useCart } from "./cart-provider";
-import { useSiteSettings } from "./site-settings-provider";
 
 const money = (value: number) => `$${Math.round(value).toLocaleString("es-AR")}`;
 
 export function CartDrawer() {
   const { lines, products, loading, open, setOpen, changeQty, remove, clear, coupon, couponError, applyCoupon, removeCoupon } = useCart();
-  const { whatsappPhone } = useSiteSettings();
+  const { branches, selected, fallbackPhone, ask } = useBranch();
 
   useEffect(() => {
     if (!open) return;
@@ -26,7 +27,10 @@ export function CartDrawer() {
   const subtotal = cartTotals(visible, products);
   const totals = totalsWithCoupon(subtotal, coupon, couponBaseTotals(visible, products));
   const excluded = visible.filter((line) => !acceptsCoupon(products.get(line.id)!)).length;
-  const href = visible.length ? buildCartUrl(whatsappPhone, buildCartMessage(visible, products, window.location.origin, coupon)) : "";
+  const message = visible.length ? buildCartMessage(visible, products, window.location.origin, coupon) : "";
+  // con sucursales: la elegida; sin ninguna con WhatsApp: el número general, como antes
+  const phone = selected ? phoneDigits(selected) : branches.length === 0 ? fallbackPhone : "";
+  const href = message && phone ? buildCartUrl(phone, message) : "";
   const hasDiscount = totals.cashDiscount > 0 || totals.listDiscount > 0;
 
   function submitCoupon(event: FormEvent<HTMLFormElement>) {
@@ -78,7 +82,13 @@ export function CartDrawer() {
         <div className="cart-total"><span>Total en efectivo</span><b>{money(totals.cash)}</b></div>
         <div className="cart-total"><span>Total de contado</span><b>{money(totals.list)}</b></div>
         <small>Precios sujetos a confirmación por WhatsApp.</small>
-        {href ? <a className="whatsapp-button large" href={href} target="_blank" rel="noreferrer">Enviar pedido por WhatsApp</a> : <p className="cart-empty">El WhatsApp de la tienda todavía no está configurado.</p>}
+        {branches.length > 1 ? <div className="cart-branch">
+          <span>Sucursal: <b>{selected ? selected.name : "sin elegir"}</b>{selected ? <small>{branchLocation(selected)}</small> : null}</span>
+          <button type="button" onClick={() => ask()}>{selected ? "Cambiar" : "Elegir"}</button>
+        </div> : null}
+        {href ? <a className="whatsapp-button large" href={href} target="_blank" rel="noreferrer">Enviar pedido por WhatsApp</a>
+          : branches.length > 0 ? <button type="button" className="whatsapp-button large" onClick={() => ask((branch) => window.open(buildCartUrl(phoneDigits(branch), message), "_blank", "noopener,noreferrer"))}>Enviar pedido por WhatsApp</button>
+          : <p className="cart-empty">El WhatsApp de la tienda todavía no está configurado.</p>}
         <button type="button" className="cart-clear" onClick={clear}>Vaciar pedido</button>
       </footer> : null}
     </aside>

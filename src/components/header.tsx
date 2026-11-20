@@ -6,6 +6,7 @@ import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
 import { highlightParts } from "@/lib/highlight";
 import type { Product } from "@/lib/types";
 import { usePathname, useRouter } from "next/navigation";
+import { useBranch } from "./branch-provider";
 import { useCart } from "./cart-provider";
 
 export function Header() {
@@ -14,6 +15,7 @@ export function Header() {
   const [darkHeader, setDarkHeader] = useState(false);
   const [search, setSearch] = useState("");
   const { count, setOpen } = useCart();
+  const { branches, selected, ask } = useBranch();
   const [results, setResults] = useState<Product[]>([]);
   const [total, setTotal] = useState(0);
   const [panelOpen, setPanelOpen] = useState(false);
@@ -99,7 +101,7 @@ export function Header() {
               id="header-search"
               className="header-search-input"
               type="search"
-              placeholder="Buscar productos, marcas y categorías"
+              placeholder="¿Qué estás buscando?"
               value={search}
               onChange={(event) => { setSearch(event.target.value); setPanelOpen(true); }}
               onFocus={() => setPanelOpen(true)}
@@ -136,6 +138,10 @@ export function Header() {
             <Link href="/catalogo">Productos</Link>
             <Link href="/catalogo?outlet=1">Outlet</Link>
             <Link href="/promos-bancarias">Promos bancarias</Link>
+            {branches.length > 1 ? <button type="button" className="branch-chip" onClick={() => ask()} aria-label={selected ? `Sucursal elegida: ${selected.name}. Cambiar` : "Elegir sucursal"}>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></svg>
+              <span className="branch-chip-text"><small>Sucursal</small>{selected ? selected.name : "Elegir"}</span>
+            </button> : null}
             <button type="button" className="cart-trigger" onClick={() => setOpen(true)} aria-label={`Ver pedido (${count} artículos)`}>Mi pedido{count > 0 ? <span className="cart-badge">{count}</span> : null}</button>
           </nav>
         </>

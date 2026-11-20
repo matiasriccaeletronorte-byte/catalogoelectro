@@ -54,6 +54,7 @@ export function storeJsonLd(base: string, branches: Branch[], phone: string) {
       "@type": "ElectronicsStore",
       name: `${SITE_NAME} ${branch.name}`,
       telephone: branch.phone,
+      containedInPlace: { "@type": "AdministrativeArea", name: "Partido de Malvinas Argentinas, Buenos Aires" },
       address: { "@type": "PostalAddress", streetAddress: branch.name, addressLocality: branch.city.split(",")[0]?.trim() || city, addressRegion: region ?? "Buenos Aires", addressCountry: "AR" }
     }))
   };

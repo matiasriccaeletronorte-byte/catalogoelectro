@@ -85,9 +85,9 @@ export function buildCartMessage(lines: CartLine[], products: Map<string, Produc
     "",
     ...rows,
     "",
-    ...(coupon && hasDiscount ? [`Cupón ${coupon.code}: -${money(totals.cashDiscount)} en efectivo · -${money(totals.listDiscount)} de contado (no aplica a artículos con precio en efectivo menor al de contado)`] : []),
-    `Total en efectivo: ${money(totals.cash)}`,
-    `Total de contado: ${money(totals.list)}`,
+    ...(coupon && hasDiscount ? [`Cupón ${coupon.code}: -${money(totals.cashDiscount)} en precio efectivo · -${money(totals.listDiscount)} en precio transferencia/débito (no aplica a artículos con precio efectivo menor al de transferencia/débito)`] : []),
+    `Total precio efectivo: ${money(totals.cash)}`,
+    `Total precio transferencia/débito: ${money(totals.list)}`,
     "Precios sujetos a confirmación."
   ].join("\n");
 }

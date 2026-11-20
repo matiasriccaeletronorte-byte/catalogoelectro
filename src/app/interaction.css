@@ -386,3 +386,5 @@ button.whatsapp-fab{border:0;cursor:pointer}
 
 /* sin categoría elegida el panel es solo la lista; al elegir una se abre su pestaña */
 @media(min-width:861px){.menu-panel:not(.has-sub){width:280px;min-height:0;grid-template-columns:1fr}}
+.price-label{font-size:12px;font-weight:700;color:var(--muted);margin-top:-2px}
+.price-list small{font-size:12px}

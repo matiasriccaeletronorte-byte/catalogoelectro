@@ -75,14 +75,14 @@ export function CartDrawer() {
           <input name="coupon" placeholder="¿Tenés un cupón de descuento?" autoComplete="off" maxLength={24} aria-label="Código de cupón" />
           <button>Aplicar</button>
         </form>}
-        {coupon && excluded > 0 ? <small className="cart-coupon-note">{hasDiscount ? "" : "El cupón no descuenta nada: "}{excluded === 1 ? "1 artículo tiene precio en efectivo menor al de contado y no participa del cupón." : `${excluded} artículos tienen precio en efectivo menor al de contado y no participan del cupón.`}</small> : null}
+        {coupon && excluded > 0 ? <small className="cart-coupon-note">{hasDiscount ? "" : "El cupón no descuenta nada: "}{excluded === 1 ? "1 artículo tiene el precio efectivo menor al de transferencia/débito y no participa del cupón." : `${excluded} artículos tienen el precio efectivo menor al de transferencia/débito y no participan del cupón.`}</small> : null}
         {couponError && !coupon ? <small className="cart-coupon-error" role="alert">{couponError}</small> : null}
         {hasDiscount ? <>
-          <div className="cart-total discount"><span>Descuento en efectivo</span><b>−{money(totals.cashDiscount)}</b></div>
-          <div className="cart-total discount"><span>Descuento de contado</span><b>−{money(totals.listDiscount)}</b></div>
+          <div className="cart-total discount"><span>Descuento precio efectivo</span><b>−{money(totals.cashDiscount)}</b></div>
+          <div className="cart-total discount"><span>Descuento precio transferencia/débito</span><b>−{money(totals.listDiscount)}</b></div>
         </> : null}
-        <div className="cart-total"><span>Total en efectivo</span><b>{money(totals.cash)}</b></div>
-        <div className="cart-total"><span>Total de contado</span><b>{money(totals.list)}</b></div>
+        <div className="cart-total"><span>Total precio efectivo</span><b>{money(totals.cash)}</b></div>
+        <div className="cart-total"><span>Total precio transferencia/débito</span><b>{money(totals.list)}</b></div>
         <small>Precios sujetos a confirmación por WhatsApp.</small>
         {branches.length > 1 ? <div className="cart-branch">
           <span>Sucursal: <b>{selected ? selected.name : "sin elegir"}</b>{selected ? <small>{branchLocation(selected)}</small> : null}</span>

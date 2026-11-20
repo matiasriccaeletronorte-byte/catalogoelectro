@@ -19,7 +19,7 @@ export default function BankPromotionsPage() {
       <p>PROMOS BANCARIAS</p>
       <h1>Opciones de financiación</h1>
       <p className="form-message">
-        Acá podés mostrar las promociones bancarias vigentes y la información que cargue el administrador.
+        Las promociones bancarias y las cuotas con BBVA son <b>solo de forma presencial en el local</b>.
       </p>
 
       <div className="promo-bank-strip" style={{ marginTop: 24 }}>

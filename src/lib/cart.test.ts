@@ -34,8 +34,8 @@ describe("cart", () => {
     const msg = buildCartMessage([{ id: "a", qty: 2 }], products, "https://x.com");
     expect(msg).toContain("2 x Art a (código S-a)");
     expect(msg).toContain("https://x.com/productos/a");
-    expect(msg).toContain("Total en efectivo: $200");
-    expect(msg).toContain("Total de contado: $240");
+    expect(msg).toContain("Total precio efectivo: $200");
+    expect(msg).toContain("Total precio transferencia/débito: $240");
   });
   it("sin teléfono no arma link", () => {
     expect(buildCartUrl("", "x")).toBe("");
@@ -47,8 +47,8 @@ describe("cart", () => {
     expect(totalsWithCoupon({ cash: 1000, list: 1200 }, coupon)).toEqual({ cash: 900, list: 1080, cashDiscount: 100, listDiscount: 120 });
     const msg = buildCartMessage([{ id: "a", qty: 1 }], products, "https://x.com", coupon);
     expect(msg).toContain("Cupón VERANO10");
-    expect(msg).toContain("Total en efectivo: $900");
-    expect(msg).toContain("Total de contado: $900");
+    expect(msg).toContain("Total precio efectivo: $900");
+    expect(msg).toContain("Total precio transferencia/débito: $900");
   });
   it("sin cupón los totales no cambian", () => {
     expect(totalsWithCoupon({ cash: 500, list: 600 }, null)).toEqual({ cash: 500, list: 600, cashDiscount: 0, listDiscount: 0 });

@@ -33,12 +33,13 @@ export function BankPromosTab() {
   }
 
   return (
-    <div className="product-form">
+    <div className="bank-promos">
       <p>VENTAS</p>
       <h1>Promos bancarias</h1>
+      <p className="bank-promos-note">Las promos bancarias y las cuotas con BBVA son <b>solo de forma presencial en el local</b>.</p>
 
       <h2>Días de 6 cuotas con BBVA</h2>
-      <div>
+      <div className="bank-promos-date">
         <input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} aria-label="Fecha de 6 cuotas con BBVA" />
         <button type="button" onClick={addDate}>Agregar fecha</button>
       </div>
@@ -47,9 +48,7 @@ export function BankPromosTab() {
       </ul>
 
       <h2>Promos de bancos y tarjetas</h2>
-      <div className="home-editor-actions">
-        <button type="button" onClick={() => setPromos([...promos, emptyPromo])}>Agregar promo</button>
-      </div>
+      <button type="button" className="bank-promos-add" onClick={() => setPromos([...promos, emptyPromo])}>Agregar promo</button>
       <div className="home-editor-stack">
         {promos.map((promo, index) => (
           <article key={index} className="home-editor-item">
@@ -61,7 +60,7 @@ export function BankPromosTab() {
         ))}
       </div>
 
-      <button type="button" onClick={() => void save()}>Guardar</button>
+      <button type="button" className="bank-promos-save" onClick={() => void save()}>Guardar</button>
       <small>{message}</small>
     </div>
   );

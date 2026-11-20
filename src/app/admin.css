@@ -216,3 +216,14 @@
 .coupon-chosen button{border:0;background:none;cursor:pointer;font-size:16px;line-height:1;color:var(--muted)}
 .coupon-item-names{display:block;max-height:3.2em;overflow:auto;color:var(--muted)}
 .brand-row select{padding:7px;border:1px solid var(--line);border-radius:7px;font:inherit;background:#fff}
+.bank-promos{display:grid;gap:12px;align-content:start;background:#f6f4f3;padding:20px;margin-bottom:26px}
+.bank-promos h1,.bank-promos h2,.bank-promos p{margin:0}
+.bank-promos-note{padding:10px 12px;border:1px solid var(--line);background:#fff;border-radius:8px;font-size:14px}
+.bank-promos-date{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.bank-promos input,.bank-promos textarea{padding:10px;border:1px solid var(--line);border-radius:7px;font:inherit;background:#fff;color:var(--text)}
+.bank-promos textarea{min-height:70px;resize:vertical}
+.bank-promos .home-editor-item{display:grid;gap:8px;padding:12px;background:#fff;border:1px solid var(--line);border-radius:10px}
+.bank-promos button{padding:10px 16px;border:0;border-radius:7px;background:#1f2328;color:#fff;font:inherit;font-weight:700;cursor:pointer}
+.bank-promos-add,.bank-promos-save{justify-self:start}
+.bank-promos ul{margin:0;padding-left:18px}.bank-promos li button{padding:2px 8px;margin-left:6px}
+.bank-promos small{color:#e3062f}

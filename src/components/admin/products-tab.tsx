@@ -6,14 +6,16 @@ import { MAX_IMAGES_PER_PRODUCT, planUploads } from "@/lib/image-limits";
 import { cashFromDiscount, DiscountType, impliedDiscount } from "@/lib/cash-discount";
 import { normalizeImageUrl } from "@/lib/image-url";
 import { ImagePlaceholder } from "../image-placeholder";
+import { CategoryPicker } from "./category-picker";
+import { formatPath, nodePath, type CategoryNodeData } from "@/lib/category-tree";
 import type { Product } from "@/lib/types";
 
 const pesos = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
-const emptyForm = { sku: "", name: "", description: "", category: "", subCategory: "", brand: "", cashPrice: "", listPrice: "", available: true, outlet: false, active: true, features: "" };
+const emptyForm = { sku: "", name: "", description: "", categoryId: "", brand: "", cashPrice: "", listPrice: "", available: true, outlet: false, active: true, features: "" };
 type AdminProduct = Product & { active: boolean };
 type Page = { items: AdminProduct[]; total: number; page: number; pageSize: number };
 
-export function ProductsTab({ categories, subCategories = {}, brands = [] }: { categories: string[]; subCategories?: Record<string, string[]>; brands?: string[] }) {
+export function ProductsTab({ nodes = [], brands = [] }: { nodes?: CategoryNodeData[]; brands?: string[] }) {
   const [data, setData] = useState<Page>({ items: [], total: 0, page: 1, pageSize: 25 });
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
@@ -43,8 +45,8 @@ export function ProductsTab({ categories, subCategories = {}, brands = [] }: { c
     setDiscountValue("");
     setImages(product.images ?? []);
     setForm({
-      sku: product.sku ?? "", name: product.name, description: product.description, category: product.category,
-      subCategory: product.subCategory ?? "", brand: product.brand ?? "", cashPrice: String(product.cashPrice), listPrice: String(product.listPrice),
+      sku: product.sku ?? "", name: product.name, description: product.description,
+      categoryId: product.categoryId ?? "", brand: product.brand ?? "", cashPrice: String(product.cashPrice), listPrice: String(product.listPrice),
       available: product.available, outlet: product.outlet, active: product.active, features: (product.features ?? []).join("\n")
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -141,12 +143,9 @@ export function ProductsTab({ categories, subCategories = {}, brands = [] }: { c
     <form className="product-form" onSubmit={save}>
       <input value={form.sku} onChange={(e) => set("sku", e.target.value)} placeholder="SKU (código único)" required />
       <input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="Nombre" required />
-      <input value={form.category} onChange={(e) => set("category", e.target.value)} placeholder="Categoría" list="categories" required />
-      <input value={form.subCategory} onChange={(e) => set("subCategory", e.target.value)} placeholder="Subcategoría" list="subcategories" />
-      <datalist id="subcategories">{(subCategories[form.category] ?? []).map((s) => <option key={s} value={s} />)}</datalist>
+      <CategoryPicker nodes={nodes} value={form.categoryId} onChange={(id) => set("categoryId", id)} />
       <input value={form.brand} onChange={(e) => set("brand", e.target.value)} placeholder="Marca" list="brands" />
       <datalist id="brands">{brands.map((brand) => <option key={brand} value={brand} />)}</datalist>
-      <datalist id="categories">{categories.map((c) => <option key={c} value={c} />)}</datalist>
       <label className="field">Precio en efectivo ($)
         <input value={form.cashPrice} onChange={(e) => changeCashPrice(e.target.value.replace(/\D/g, ""))} placeholder="Precio en efectivo" inputMode="numeric" required />
       </label>
@@ -190,7 +189,7 @@ export function ProductsTab({ categories, subCategories = {}, brands = [] }: { c
       {data.items.map((product) => (
         <article key={product.id}>
           <span>{product.image ? <img src={normalizeImageUrl(product.image, 120)} alt="" width={40} height={40} /> : <ImagePlaceholder label="Sin foto" />}</span>
-          <div><b>{product.name}</b><small>{product.sku} · {product.category}{product.available ? "" : " · no disponible"}{product.active ? "" : " · INACTIVO"}</small></div>
+          <div><b>{product.name}</b><small>{product.sku} · {product.categoryId ? formatPath(nodePath(nodes, product.categoryId)) : product.category}{product.available ? "" : " · no disponible"}{product.active ? "" : " · INACTIVO"}</small></div>
           <strong>{pesos.format(product.cashPrice)} / {pesos.format(product.listPrice)}</strong>
           <button onClick={() => edit(product)}>Editar</button>
           {product.active ? <button onClick={() => void deactivate(product.id)}>Desactivar</button> : <button onClick={() => edit(product)}>Reactivar</button>}

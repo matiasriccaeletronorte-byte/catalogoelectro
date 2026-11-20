@@ -7,6 +7,8 @@ import type { Product } from "@/lib/types";
 import { CouponsTab } from "@/components/admin/coupons-tab";
 import { BrandsTab, type BrandRow } from "@/components/admin/brands-tab";
 import { ProductsTab } from "./admin/products-tab";
+import { CategoriesTab } from "./admin/categories-tab";
+import type { CategoryNodeData } from "@/lib/category-tree";
 import { ImportTab } from "./admin/import-tab";
 import { SettingsTab } from "./admin/settings-tab";
 
@@ -31,8 +33,7 @@ export function AdminPanel() {
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
   const [tab, setTab] = useState<Tab>("products");
-  const [categories, setCategories] = useState<string[]>([]);
-  const [subTree, setSubTree] = useState<Record<string, string[]>>({});
+  const [nodes, setNodes] = useState<CategoryNodeData[]>([]);
   const [brands, setBrands] = useState<BrandRow[]>([]);
   const [message, setMessage] = useState("");
   const [homeSettings, setHomeSettings] = useState<HomepageSettings>({
@@ -48,16 +49,14 @@ export function AdminPanel() {
   const [pickerResults, setPickerResults] = useState<Record<FeaturedKey, Product[]>>({ bestSellerIds: [], offerIds: [] });
 
   const load = async () => {
-    const [categoryData, subData, brandData, homepageData] = await Promise.all([
-      fetch("/api/admin/categories").then((r) => (r.ok ? r.json() : [])),
-      fetch("/api/admin/subcategories").then((r) => (r.ok ? r.json() : {})),
+    const [treeData, brandData, homepageData] = await Promise.all([
+      fetch("/api/admin/category-tree").then((r) => (r.ok ? r.json() : { nodes: [] })),
       fetch("/api/admin/brands").then((r) => (r.ok ? r.json() : [])),
       fetch("/api/admin/homepage").then((r) =>
         r.ok ? r.json() : { bestSellerIds: [], offerIds: [], offerTimers: [], heroImages: [], carouselSlides: [], bankPromotions: [] }
       )
     ]);
-    setCategories(categoryData);
-    setSubTree(subData);
+    setNodes(treeData.nodes ?? []);
     setBrands(brandData);
     setHomeSettings({
       bestSellerIds: (homepageData.bestSellerIds ?? []).slice(0, 3),
@@ -131,53 +130,6 @@ export function AdminPanel() {
       return setLoginError(payload.error ?? "Contraseña incorrecta o panel sin configurar.");
     }
     setAuthenticated(true);
-    void load();
-  }
-
-  async function addCategory(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const name = new FormData(form).get("category");
-    if (typeof name !== "string" || !name.trim()) return;
-    const response = await fetch("/api/admin/categories", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name.trim() })
-    });
-    if (!response.ok) return;
-    form.reset();
-    void load();
-  }
-
-  async function renameCategory(name: string) {
-    const newName = window.prompt(`Nuevo nombre para la categoría "${name}":`, name)?.trim();
-    if (!newName || newName === name) return;
-    const response = await fetch("/api/admin/categories", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, newName }) });
-    if (!response.ok) return setMessage("No se pudo renombrar la categoría.");
-    setMessage("");
-    void load();
-  }
-
-  async function removeCategory(name: string) {
-    if (!window.confirm(`¿Eliminar la categoría "${name}"?`)) return;
-    const response = await fetch("/api/admin/categories", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) });
-    if (!response.ok) return setMessage((await response.json().catch(() => ({}))).error ?? "No se pudo eliminar la categoría.");
-    setMessage("");
-    void load();
-  }
-
-  async function addSubCategory(category: string, form: HTMLFormElement) {
-    const name = String(new FormData(form).get("sub") ?? "").trim();
-    if (name.length < 2) return;
-    const response = await fetch("/api/admin/subcategories", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ category, name }) });
-    if (!response.ok) return setMessage("No se pudo crear la subcategoría.");
-    form.reset();
-    void load();
-  }
-
-  async function removeSubCategory(category: string, name: string) {
-    const response = await fetch("/api/admin/subcategories", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ category, name }) });
-    if (!response.ok) return setMessage((await response.json().catch(() => ({}))).error ?? "No se pudo quitar la subcategoría.");
     void load();
   }
 
@@ -396,7 +348,7 @@ export function AdminPanel() {
           </>
         )}
 
-        {tab === "products" && <ProductsTab categories={categories} subCategories={subTree} brands={brands.map((b) => b.name)} />}
+        {tab === "products" && <ProductsTab nodes={nodes} brands={brands.map((b) => b.name)} />}
         {tab === "import" && <ImportTab />}
         {tab === "settings" && <SettingsTab />}
 
@@ -404,35 +356,7 @@ export function AdminPanel() {
 
         {tab === "brands" && <BrandsTab brands={brands} onChange={() => void load()} />}
 
-        {tab === "categories" && (
-          <>
-            <p>ORGANIZACIÓN</p>
-            <h1>Categorías</h1>
-            <form className="category-form" onSubmit={addCategory}>
-              <input name="category" placeholder="Nueva categoría" required />
-              <button>Agregar</button>
-            </form>
-            <small>Creá la categoría y después sumale sus subcategorías. Al cargar un artículo las elegís de la lista.</small>
-            <div className="category-tree">
-              {categories.map((category) => <section key={category} className="category-node">
-                <div className="category-node-head">
-                  <h3>{category}</h3>
-                  <button type="button" className="row-action" onClick={() => void renameCategory(category)}>Renombrar</button>
-                  <button type="button" className="row-action danger" onClick={() => void removeCategory(category)}>Eliminar</button>
-                </div>
-                <div className="category-list">
-                  {(subTree[category] ?? []).map((sub) => <span key={sub}>{sub} <button type="button" aria-label={`Quitar ${sub}`} onClick={() => void removeSubCategory(category, sub)}>✕</button></span>)}
-                  {(subTree[category] ?? []).length === 0 ? <small>Sin subcategorías</small> : null}
-                </div>
-                <form className="category-form" onSubmit={(event) => { event.preventDefault(); void addSubCategory(category, event.currentTarget); }}>
-                  <input name="sub" placeholder={`Nueva subcategoría de ${category}`} />
-                  <button>Agregar</button>
-                </form>
-              </section>)}
-            </div>
-            <small>{message}</small>
-          </>
-        )}
+        {tab === "categories" && <CategoriesTab onChange={() => void load()} />}
       </section>
     </main>
   );

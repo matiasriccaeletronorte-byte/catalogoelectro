@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CatalogFilters, PAGE_SIZE, parseFilters, serializeFilters, SortKey } from "@/lib/catalog-filters";
 import type { CatalogResult } from "@/lib/catalog-query";
 import { CatalogFiltersPanel } from "./catalog-filters-panel";
@@ -10,17 +10,21 @@ import { ProductCard } from "./product-card";
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [{ key: "price_asc", label: "Menor precio" }, { key: "price_desc", label: "Mayor precio" }];
 const pesos = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
 
-export function Catalog() {
+export function Catalog({ initialResult = null, initialQuery = "" }: { initialResult?: CatalogResult | null; initialQuery?: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const filters = parseFilters(new URLSearchParams(searchParams.toString()));
   const queryString = serializeFilters(filters).toString();
-  const [result, setResult] = useState<CatalogResult | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [result, setResult] = useState<CatalogResult | null>(initialResult);
+  const [loading, setLoading] = useState(initialResult === null);
+  const servedFromServer = useRef(initialResult !== null ? initialQuery : null);
   const [error, setError] = useState("");
   const [panelOpen, setPanelOpen] = useState(false);
 
   useEffect(() => {
+    // la primera vez, el servidor ya mandó estos resultados: no se piden de nuevo
+    if (servedFromServer.current === queryString) { servedFromServer.current = null; return; }
+    servedFromServer.current = null;
     const controller = new AbortController();
     setLoading(true);
     fetch(`/api/products?${queryString}`, { signal: controller.signal })

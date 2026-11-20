@@ -53,3 +53,17 @@ export async function runCatalogQuery(f: CatalogFilters): Promise<CatalogResult>
     }
   };
 }
+
+/** Artículos activos por id, en el mismo orden pedido (máximo 40). Ids inválidos se ignoran. */
+export async function getProductsByIds(ids: string[]): Promise<Product[]> {
+  const wanted = ids.slice(0, 40);
+  if (wanted.length === 0) return [];
+  let rows: Record<string, unknown>[] = [];
+  try {
+    rows = await ProductModel.find({ _id: { $in: wanted }, active: { $ne: false } }).lean() as unknown as Record<string, unknown>[];
+  } catch {
+    rows = [];
+  }
+  const byId = new Map(rows.map((row) => [String(row._id), row]));
+  return wanted.map((id) => byId.get(id)).filter(Boolean).map((row) => toPublicProduct(row!));
+}

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import type { HomepageSettings } from "@/lib/homepage-settings";
 import { useRouter } from "next/navigation";
 import type { HomeShelves } from "@/lib/home-shelves";
 import { ProductShelf } from "./product-shelf";
@@ -11,15 +12,6 @@ import { useSiteSettings } from "./site-settings-provider";
 import { ProductCard } from "@/components/product-card";
 import { Product } from "@/lib/types";
 import { normalizeImageUrl } from "@/lib/image-url";
-
-type HomepageSettings = {
-  bestSellerIds: string[];
-  offerIds: string[];
-  offerTimers: { productId: string; endsAt: string }[];
-  heroImages: string[];
-  carouselSlides: { tag: string; title: string; text: string; image: string }[];
-  bankPromotions: { title: string; description: string; note: string }[];
-};
 
 const defaultSlides = [
   {
@@ -43,51 +35,16 @@ const defaultSlides = [
 ];
 
 
-export function HomePage({ shelves, categoryTiles }: { shelves: HomeShelves; categoryTiles: CategoryTile[] }) {
+export function HomePage({ shelves, categoryTiles, homepage, featured }: { shelves: HomeShelves; categoryTiles: CategoryTile[]; homepage: HomepageSettings; featured: Product[] }) {
   const { branches } = useSiteSettings();
   const router = useRouter();
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<string[]>(["Todos"]);
-  const [homepage, setHomepage] = useState<HomepageSettings>({
-    bestSellerIds: [],
-    offerIds: [],
-    offerTimers: [],
-    heroImages: [],
-    carouselSlides: [],
-    bankPromotions: []
-  });
-  const [error, setError] = useState("");
+  const featuredProducts = featured;
   const [slide, setSlide] = useState(0);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(() => Date.now());
 
-  useEffect(() => {
-    fetch("/api/homepage")
-      .then((res) => (res.ok ? res.json() : { bestSellerIds: [], offerIds: [], offerTimers: [], heroImages: [], carouselSlides: [], bankPromotions: [] }))
-      .then((homepageData) => {
-        setHomepage({
-          bestSellerIds: homepageData.bestSellerIds ?? [],
-          offerIds: homepageData.offerIds ?? [],
-          offerTimers: homepageData.offerTimers ?? [],
-          heroImages: homepageData.heroImages ?? [],
-          carouselSlides: homepageData.carouselSlides ?? [],
-          bankPromotions: homepageData.bankPromotions ?? []
-        });
-        const featuredIds = [...new Set([...(homepageData.bestSellerIds ?? []), ...(homepageData.offerIds ?? [])])];
-        if (featuredIds.length) fetch(`/api/products?ids=${featuredIds.join(",")}`).then((res) => res.ok ? res.json() : { items: [] }).then((data) => setFeaturedProducts(data.items ?? []));
-      })
-      .catch(() => setError("No se pudo cargar el catálogo. Verificá la conexión a MongoDB."));
-  }, []);
-
-  useEffect(() => {
-    fetch("/api/products")
-      .then((res) => (res.ok ? res.json() : Promise.reject()))
-      .then((data) => setCategories(["Todos", ...(data.facets?.categories ?? []).map((c: { value: string }) => c.value)]))
-      .catch(() => setError("No se pudo cargar el catálogo. Verificá la conexión a la base de datos."));
-  }, []);
-
   const carouselSlides = homepage.carouselSlides.length > 0 ? homepage.carouselSlides : defaultSlides;
-  const categoriesMenu = useMemo(() => categories.filter((item) => item !== "Todos"), [categories]);
+  const categoriesMenu = useMemo(() => categoryTiles.map((tile) => tile.name), [categoryTiles]);
   const menuCategories = categoriesMenu.length > 0 ? categoriesMenu : ["Electrodomésticos", "Tecnología", "Hogar"];
 
   const indexedProducts = useMemo(() => new Map(featuredProducts.map((product) => [product.id, product])), [featuredProducts]);
@@ -178,7 +135,7 @@ export function HomePage({ shelves, categoryTiles }: { shelves: HomeShelves; cat
         <div className={`hero-carousel hero-carousel-wide${currentSlideImage ? " has-image" : ""}`}>
           {currentSlideImage ? (
             <div className="hero-carousel-media carousel-enter" key={`image-${slide}`}>
-              <img className="hero-main" src={currentSlideImage} alt={currentSlide.title} />
+              <img className="hero-main" src={currentSlideImage} alt={currentSlide.title} fetchPriority="high" decoding="async" />
             </div>
           ) : null}
           {!currentSlideImage ? <span className="badge-soft hero-carousel-tag">{currentSlide.tag}</span> : null}

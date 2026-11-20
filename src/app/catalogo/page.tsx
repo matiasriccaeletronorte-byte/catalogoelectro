@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Catalog } from "@/components/catalog";
+import { parseFilters, serializeFilters } from "@/lib/catalog-filters";
+import { runCatalogQuery } from "@/lib/catalog-query";
+import { connectDb } from "@/lib/db";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -20,6 +23,20 @@ export async function generateMetadata({ searchParams }: { searchParams: SearchP
   };
 }
 
-export default function CatalogPage() {
-  return <Suspense fallback={<p className="catalog-loading" role="status">Cargando catálogo…</p>}><Catalog /></Suspense>;
+export default async function CatalogPage({ searchParams }: { searchParams: SearchParams }) {
+  const params = await searchParams;
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) for (const item of Array.isArray(value) ? value : value === undefined ? [] : [value]) query.append(key, item);
+  const filters = parseFilters(query);
+  // la primera página de resultados llega ya armada: sin espera en blanco ni saltos al cargar
+  let initialResult = null;
+  try {
+    await connectDb();
+    initialResult = JSON.parse(JSON.stringify(await runCatalogQuery(filters)));
+  } catch {
+    initialResult = null;
+  }
+  return <Suspense fallback={<p className="catalog-loading" role="status">Cargando catálogo…</p>}>
+    <Catalog initialResult={initialResult} initialQuery={serializeFilters(filters).toString()} />
+  </Suspense>;
 }

@@ -27,7 +27,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html lang="es">
       <body>
-        <SiteSettingsProvider initial={settings}>
+        <SiteSettingsProvider initial={settings} siteOrigin={siteUrl()}>
           <CartProvider>
           <Header />
           <CartDrawer />

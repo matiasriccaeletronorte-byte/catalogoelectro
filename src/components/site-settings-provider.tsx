@@ -3,10 +3,13 @@
 import { createContext, useContext } from "react";
 import type { SiteSettings } from "@/lib/site-settings";
 
-const SiteSettingsContext = createContext<SiteSettings>({ whatsappPhone: "", whatsappTemplate: "", bbvaDates: [], branches: [], categoryImages: [] });
+type SiteContext = SiteSettings & { siteOrigin: string };
 
-export function SiteSettingsProvider({ initial, children }: { initial: SiteSettings; children: React.ReactNode }) {
-  return <SiteSettingsContext.Provider value={initial}>{children}</SiteSettingsContext.Provider>;
+const SiteSettingsContext = createContext<SiteContext>({ whatsappPhone: "", whatsappTemplate: "", bbvaDates: [], branches: [], categoryImages: [], siteOrigin: "" });
+
+/** `siteOrigin` es la dirección pública del sitio: igual en el servidor y en el navegador, así los enlaces no cambian al cargar. */
+export function SiteSettingsProvider({ initial, siteOrigin, children }: { initial: SiteSettings; siteOrigin: string; children: React.ReactNode }) {
+  return <SiteSettingsContext.Provider value={{ ...initial, siteOrigin }}>{children}</SiteSettingsContext.Provider>;
 }
 
 export const useSiteSettings = () => useContext(SiteSettingsContext);

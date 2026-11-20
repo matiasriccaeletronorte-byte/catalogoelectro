@@ -198,3 +198,9 @@
 .tree-message{color:#c72a2a}
 .legacy-banner{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;margin:10px 0;border:1px solid #E52627;background:#fff7f7;border-radius:10px}
 .row-action:disabled{opacity:.4;cursor:not-allowed}
+
+.branch-numbers{display:grid;gap:8px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.branch-numbers legend{font-weight:800;padding:0 6px}
+.branch-numbers label{display:grid;gap:4px;font-size:13px;font-weight:600;color:var(--muted)}
+.branch-numbers input{padding:10px;border:1px solid var(--line);border-radius:7px;font:inherit;background:#fff;color:var(--text)}
+.branch-fixed-place{margin:0;color:var(--muted);font-size:14px}

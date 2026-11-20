@@ -8,7 +8,7 @@ import { Types } from "mongoose";
 import { ProductModel } from "@/models/Product";
 import {
   categoryFieldsFor, CategoryError, convertLegacy, countsByNode, createNode, deleteNode, ensurePath, legacyProductCount,
-  findRedirect, loadNodes, moveNode, moveProducts, productUpdateOps, renameNode
+  deleteProductsInBranch, findRedirect, loadNodes, moveNode, moveProducts, productUpdateOps, renameNode
 } from "./category-store";
 
 // Prueba de integración: usa una base de pruebas en MongoDB local. Si no hay Mongo, se omite.
@@ -284,5 +284,27 @@ describe("revisión final: carreras, direcciones viejas y reparación", () => {
     const read = new Types.ObjectId();
     const ops = productUpdateOps([{ _id: new Types.ObjectId(), sku: "S", name: "N", brand: "", categoryId: read }], [{ id: String(leaf), name: "A", slug: "a", parentId: null }]);
     expect(ops[0].updateOne.filter).toMatchObject({ categoryId: read });
+  });
+});
+
+describe("deleteProductsInBranch", () => {
+  it("borra los artículos de la categoría y de sus subcategorías, y solo esos; las categorías quedan", async (ctx) => {
+    if (!available) return ctx.skip();
+    const hogar = await createNode(null, "Hogar");
+    const bazar = await createNode(hogar.id, "Bazar");
+    const cocina = await createNode(null, "Cocina");
+    await assign(hogar.id, ["a"]);
+    await assign(bazar.id, ["b"]);
+    await assign(cocina.id, ["c"]);
+    expect(await deleteProductsInBranch(hogar.id)).toBe(2);
+    expect(await ProductModel.countDocuments()).toBe(1);
+    expect(await ProductModel.countDocuments({ categoryId: cocina.id })).toBe(1);
+    expect(await loadNodes()).toHaveLength(3);
+  });
+  it("una categoría vacía borra 0 y una que no existe da error", async (ctx) => {
+    if (!available) return ctx.skip();
+    const vacia = await createNode(null, "Vacía");
+    expect(await deleteProductsInBranch(vacia.id)).toBe(0);
+    await expect(deleteProductsInBranch("c".repeat(24))).rejects.toMatchObject({ code: "not_found" });
   });
 });

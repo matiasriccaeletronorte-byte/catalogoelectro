@@ -139,6 +139,14 @@ export async function moveProducts(fromId: string, toId: string): Promise<number
   return setProductsCategory({ categoryId: { $in: [fromId, ...descendantIds(nodes, fromId)] } }, nodePath(nodes, toId));
 }
 
+/** Borra los artículos de una categoría y de sus subcategorías. Las categorías quedan. Devuelve cuántos borró. */
+export async function deleteProductsInBranch(id: string): Promise<number> {
+  const nodes = await loadNodes();
+  if (!nodes.some((node) => node.id === id)) throw new CategoryError("not_found", "La categoría no existe.");
+  const result = await ProductModel.deleteMany({ categoryId: { $in: [id, ...descendantIds(nodes, id)] } });
+  return result.deletedCount ?? 0;
+}
+
 /** Devuelve el camino de nodos para una lista de nombres, creando los que no existan (sin distinguir tildes ni mayúsculas). */
 export async function ensurePath(names: string[], known?: CategoryNodeData[]): Promise<CategoryNodeData[]> {
   const nodes = known ?? (await loadNodes());

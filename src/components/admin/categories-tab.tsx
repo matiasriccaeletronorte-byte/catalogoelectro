@@ -46,6 +46,13 @@ export function CategoriesTab({ onChange }: { onChange: () => void }) {
     if (name && name !== node.name) await send("POST", { action: "rename", id: node.id, name }, "No se pudo renombrar.");
   }
 
+  async function deleteProducts(node: CategoryNodeData) {
+    const count = data.counts[node.id] ?? 0;
+    const word = window.prompt(`Se van a BORRAR ${count} ${count === 1 ? "artículo" : "artículos"} de "${node.name}" y de sus subcategorías. No se puede deshacer. Las categorías no se borran. Antes conviene descargar el catálogo en Excel (Importar / Exportar).\n\nPara confirmar, escribí BORRAR:`);
+    if (word?.trim() !== "BORRAR") return;
+    if (await send("POST", { action: "delete-products", id: node.id, confirm: "BORRAR" }, "No se pudieron borrar los artículos.")) setMessage(`Se borraron los artículos de "${node.name}".`);
+  }
+
   async function remove(node: CategoryNodeData) {
     if (window.confirm(`¿Borrar la categoría "${node.name}"?`)) await send("DELETE", { id: node.id }, "No se pudo borrar.");
   }
@@ -78,6 +85,7 @@ export function CategoriesTab({ onChange }: { onChange: () => void }) {
           <button type="button" className="row-action" onClick={() => void rename(node)}>Renombrar</button>
           <button type="button" className="row-action" onClick={() => setPending({ id: node.id, kind: "move" })}>Mover</button>
           <button type="button" className="row-action" onClick={() => setPending({ id: node.id, kind: "move-products" })} disabled={count === 0}>Mover artículos</button>
+          <button type="button" className="row-action danger" onClick={() => void deleteProducts(node)} disabled={count === 0}>Borrar artículos</button>
           <button type="button" className="row-action danger" onClick={() => void remove(node)}>Borrar</button>
         </span>
       </div>

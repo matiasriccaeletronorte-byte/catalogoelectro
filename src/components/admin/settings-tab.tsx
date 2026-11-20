@@ -2,11 +2,11 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import type { Branch } from "@/lib/branches";
+import { branchLocation } from "@/lib/branch-contact";
 import { shrinkImage } from "@/lib/client-image";
 import { DEFAULT_TEMPLATE } from "@/lib/whatsapp";
 
 export function SettingsTab() {
-  const [phone, setPhone] = useState("");
   const [template, setTemplate] = useState(DEFAULT_TEMPLATE);
   const [dates, setDates] = useState<string[]>([]);
   const [newDate, setNewDate] = useState("");
@@ -18,7 +18,7 @@ export function SettingsTab() {
   useEffect(() => {
     fetch("/api/admin/settings").then((r) => (r.ok ? r.json() : null)).then((s) => {
       if (!s) return;
-      setPhone(s.whatsappPhone); setTemplate(s.whatsappTemplate || DEFAULT_TEMPLATE); setDates(s.bbvaDates); setBranches(s.branches ?? []); setCategoryImages(s.categoryImages ?? []);
+      setTemplate(s.whatsappTemplate || DEFAULT_TEMPLATE); setDates(s.bbvaDates); setBranches(s.branches ?? []); setCategoryImages(s.categoryImages ?? []);
     });
     fetch("/api/products").then((r) => (r.ok ? r.json() : null)).then((data) => {
       if (data) setCategoryNames((data.facets?.categories ?? []).map((c: { value: string }) => c.value));
@@ -29,14 +29,14 @@ export function SettingsTab() {
     event.preventDefault();
     const response = await fetch("/api/admin/settings", {
       method: "PUT", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ whatsappPhone: phone, whatsappTemplate: template, bbvaDates: dates, branches, categoryImages })
+      body: JSON.stringify({ whatsappTemplate: template, bbvaDates: dates, branches, categoryImages })
     });
     setMessage(response.ok ? "Guardado." : "No se pudo guardar. Revisá los datos.");
   }
 
-  const updateBranch = (index: number, field: keyof Branch, value: string) =>
+  // las direcciones son fijas: solo se editan los números
+  const updateNumber = (index: number, field: "phone" | "whatsapp", value: string) =>
     setBranches(branches.map((branch, i) => (i === index ? { ...branch, [field]: value } : branch)));
-  const addBranch = () => setBranches([...branches, { name: "", city: "", phone: "", whatsapp: "", query: "" }]);
 
   async function uploadCategoryImage(name: string, file: File | undefined) {
     if (!file) return;
@@ -58,9 +58,6 @@ export function SettingsTab() {
     <p>AJUSTES</p>
     <h1>WhatsApp y promos</h1>
     <h2>WhatsApp</h2>
-    <label>Número (con código de país, ej. 5491154560043)
-      <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="5491154560043" />
-    </label>
     <label>Mensaje (usá {"{nombre}"}, {"{sku}"} y {"{link}"})
       <textarea value={template} onChange={(e) => setTemplate(e.target.value)} rows={3} />
     </label>
@@ -76,16 +73,17 @@ export function SettingsTab() {
     </ul>
 
     <h2>Sucursales</h2>
-    <small>Se muestran al final del inicio, con un mapa de cada una. "Dirección para el mapa" es lo que busca Google Maps (calle, número y localidad).</small>
-    {branches.map((branch, index) => <fieldset key={index}>
-      <input value={branch.name} onChange={(e) => updateBranch(index, "name", e.target.value)} placeholder="Nombre / calle y número" required />
-      <input value={branch.city} onChange={(e) => updateBranch(index, "city", e.target.value)} placeholder="Localidad (ej. Los Polvorines, Buenos Aires)" />
-      <input value={branch.phone} onChange={(e) => updateBranch(index, "phone", e.target.value)} placeholder="Teléfono (ej. 011 5456-0043)" />
-      <input value={branch.whatsapp} onChange={(e) => updateBranch(index, "whatsapp", e.target.value)} placeholder="WhatsApp con código de país (ej. 5491154560043)" />
-      <input value={branch.query} onChange={(e) => updateBranch(index, "query", e.target.value)} placeholder="Dirección para el mapa" />
-      <button type="button" onClick={() => setBranches(branches.filter((_, i) => i !== index))}>Quitar sucursal</button>
+    <small>Las direcciones de las sucursales no se modifican. Acá solo podés cambiar los números de teléfono y de WhatsApp de cada una: el cliente elige a cuál escribirle y el pedido se envía a ese número.</small>
+    {branches.map((branch, index) => <fieldset key={branch.name} className="branch-numbers">
+      <legend>{branch.name}</legend>
+      <p className="branch-fixed-place">{branchLocation(branch)}</p>
+      <label>Teléfono (ej. 011 5456-0043)
+        <input value={branch.phone} onChange={(e) => updateNumber(index, "phone", e.target.value)} />
+      </label>
+      <label>WhatsApp con código de país (ej. 5491154560043)
+        <input value={branch.whatsapp} onChange={(e) => updateNumber(index, "whatsapp", e.target.value.replace(/[^\d+\s-]/g, ""))} inputMode="tel" />
+      </label>
     </fieldset>)}
-    <button type="button" onClick={addBranch}>Agregar sucursal</button>
 
     <h2>Imágenes de las categorías</h2>
     <small>Se ven en el selector rápido de la home. Si una categoría no tiene imagen, se usa la foto de uno de sus artículos. Mejor con fondo transparente o blanco y el producto centrado.</small>

@@ -48,7 +48,7 @@ export function CategoryMenu({ menu }: { menu: MenuNode[] }) {
     const desktop = window.matchMedia(DESKTOP).matches;
     if (!desktop && trigger.current) box.current?.style.setProperty("--menu-top", `${Math.round(trigger.current.getBoundingClientRect().bottom)}px`);
     setOpen(true);
-    setActive(desktop ? (menu.find((item) => item.children.length > 0)?.id ?? null) : null);
+    setActive(null); // no se abre ninguna categoría hasta que la persona pase el mouse o toque una
   };
   const hover = (id: string) => {
     if (!window.matchMedia(DESKTOP).matches) return;

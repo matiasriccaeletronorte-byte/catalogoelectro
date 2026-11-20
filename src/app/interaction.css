@@ -383,3 +383,6 @@ button.whatsapp-fab{border:0;cursor:pointer}
   .menu-sub{padding:14px 16px}
   .menu-sub-head h3{font-size:20px}
 }
+
+/* sin categoría elegida el panel es solo la lista; al elegir una se abre su pestaña */
+@media(min-width:861px){.menu-panel:not(.has-sub){width:280px;min-height:0;grid-template-columns:1fr}}

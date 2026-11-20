@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { isAdmin, unauthorized } from "@/lib/admin-auth";
 import { buildAdminMatch, parseFilters } from "@/lib/catalog-filters";
 import { toPublicProduct } from "@/lib/catalog-query";
+import { categoryFieldsFor } from "@/lib/category-store";
 import { connectDb } from "@/lib/db";
 import { productInputSchema, withSearchText } from "@/lib/product-schema";
 import { ProductModel } from "@/models/Product";
@@ -27,8 +28,11 @@ export async function POST(request: Request) {
   const data = productInputSchema.safeParse(await request.json());
   if (!data.success) return NextResponse.json({ error: data.error.issues[0]?.message ?? "Datos de producto inválidos" }, { status: 400 });
   await connectDb();
+  const { categoryId, ...rest } = data.data;
+  const fields = await categoryFieldsFor(categoryId);
+  if (!fields) return NextResponse.json({ error: "La categoría elegida no existe." }, { status: 400 });
   try {
-    const product = await ProductModel.create(withSearchText(data.data));
+    const product = await ProductModel.create(withSearchText({ ...rest, ...fields }));
     return NextResponse.json({ id: String(product._id) }, { status: 201 });
   } catch (error) {
     if ((error as { code?: number }).code === 11000) return NextResponse.json({ error: "Ya existe un artículo con ese SKU" }, { status: 409 });

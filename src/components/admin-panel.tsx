@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { shrinkImage } from "@/lib/client-image";
 import { normalizeImageUrl } from "@/lib/image-url";
 import type { Product } from "@/lib/types";
+import { BankPromosTab } from "@/components/admin/bank-promos-tab";
 import { CouponsTab } from "@/components/admin/coupons-tab";
 import { BrandsTab, type BrandRow } from "@/components/admin/brands-tab";
 import { ProductsTab } from "./admin/products-tab";
@@ -19,14 +20,12 @@ type HomepageSettings = {
   offerTimers: { productId: string; endsAt: string }[];
   heroImages: string[];
   carouselSlides: { tag: string; title: string; text: string; image: string }[];
-  bankPromotions: { title: string; description: string; note: string }[];
 };
 
-type Tab = "products" | "import" | "settings" | "home" | "categories" | "brands" | "coupons";
+type Tab = "products" | "import" | "settings" | "home" | "categories" | "brands" | "coupons" | "bank";
 type FeaturedKey = "bestSellerIds" | "offerIds";
 
 const emptySlide = { tag: "", title: "", text: "", image: "" };
-const emptyBankPromo = { title: "", description: "", note: "" };
 
 export function AdminPanel() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
@@ -42,7 +41,6 @@ export function AdminPanel() {
     offerTimers: [],
     heroImages: [],
     carouselSlides: [],
-    bankPromotions: []
   });
   const [pickerQueries, setPickerQueries] = useState<Record<FeaturedKey, string>>({ bestSellerIds: "", offerIds: "" });
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
@@ -53,7 +51,7 @@ export function AdminPanel() {
       fetch("/api/admin/category-tree").then((r) => (r.ok ? r.json() : { nodes: [] })),
       fetch("/api/admin/brands").then((r) => (r.ok ? r.json() : [])),
       fetch("/api/admin/homepage").then((r) =>
-        r.ok ? r.json() : { bestSellerIds: [], offerIds: [], offerTimers: [], heroImages: [], carouselSlides: [], bankPromotions: [] }
+        r.ok ? r.json() : { bestSellerIds: [], offerIds: [], offerTimers: [], heroImages: [], carouselSlides: [] }
       )
     ]);
     setNodes(treeData.nodes ?? []);
@@ -67,7 +65,6 @@ export function AdminPanel() {
         ...slide,
         image: slide.image ?? ""
       })),
-      bankPromotions: homepageData.bankPromotions ?? []
     });
     const featuredIds = [...new Set([...(homepageData.bestSellerIds ?? []), ...(homepageData.offerIds ?? [])])];
     if (featuredIds.length) setFeaturedProducts((await fetch(`/api/products?ids=${featuredIds.join(",")}`).then((r) => (r.ok ? r.json() : { items: [] }))).items ?? []);
@@ -195,20 +192,9 @@ export function AdminPanel() {
     setMessage("Imagen subida. Guardá los cambios para publicarla.");
   };
 
-  const updateBankPromo = (index: number, field: keyof typeof emptyBankPromo, value: string) => {
-    setHomeSettings((current) => {
-      const bankPromotions = [...current.bankPromotions];
-      bankPromotions[index] = { ...(bankPromotions[index] ?? emptyBankPromo), [field]: value };
-      return { ...current, bankPromotions };
-    });
-  };
-
   const addSlide = () => setHomeSettings((current) => ({ ...current, carouselSlides: [...current.carouselSlides, emptySlide] }));
   const removeSlide = (index: number) =>
     setHomeSettings((current) => ({ ...current, carouselSlides: current.carouselSlides.filter((_, itemIndex) => itemIndex !== index) }));
-  const addBankPromo = () => setHomeSettings((current) => ({ ...current, bankPromotions: [...current.bankPromotions, emptyBankPromo] }));
-  const removeBankPromo = (index: number) =>
-    setHomeSettings((current) => ({ ...current, bankPromotions: current.bankPromotions.filter((_, itemIndex) => itemIndex !== index) }));
 
   async function saveHomepageSettings() {
     const carouselSlides = homeSettings.carouselSlides.map((slide) => ({ ...slide, image: normalizeImageUrl(slide.image, 1000) }));
@@ -219,7 +205,7 @@ export function AdminPanel() {
     const response = await fetch("/api/admin/homepage", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...homeSettings, bestSellerIds, offerIds, offerTimers, carouselSlides, heroImages })
+      body: JSON.stringify({ bestSellerIds, offerIds, offerTimers, carouselSlides, heroImages })
     });
     if (!response.ok) {
       const payload = await response.json().catch(() => ({}));
@@ -256,9 +242,9 @@ export function AdminPanel() {
     <main className="admin admin-layout">
       <aside className="admin-nav">
         <b>VENTAS</b>
-        {(["products", "import", "settings", "home", "categories", "brands", "coupons"] as Tab[]).map((item) => (
+        {(["products", "import", "settings", "home", "categories", "brands", "coupons", "bank"] as Tab[]).map((item) => (
           <button onClick={() => setTab(item)} className={tab === item ? "selected" : ""} key={item}>
-            {({ products: "Productos", import: "Importar / Exportar", settings: "WhatsApp y promos", home: "Home", categories: "Categorías", brands: "Marcas", coupons: "Cupones" })[item]}
+            {({ products: "Productos", import: "Importar / Exportar", settings: "WhatsApp", home: "Home", categories: "Categorías", brands: "Marcas", coupons: "Cupones", bank: "Promos bancarias" })[item]}
           </button>
         ))}
         <button
@@ -325,23 +311,6 @@ export function AdminPanel() {
                 </div>
               </section>
 
-              <section>
-                <h2>Promos bancarias</h2>
-                <p>Contenido libre, independiente de los productos.</p>
-                <div className="home-editor-actions">
-                  <button type="button" onClick={addBankPromo}>Agregar promo</button>
-                </div>
-                <div className="home-editor-stack">
-                  {homeSettings.bankPromotions.map((promo, index) => (
-                    <article key={`promo-${index}`} className="home-editor-item">
-                      <input value={promo.title} onChange={(event) => updateBankPromo(index, "title", event.target.value)} placeholder="Título" />
-                      <textarea value={promo.description} onChange={(event) => updateBankPromo(index, "description", event.target.value)} placeholder="Descripción" />
-                      <input value={promo.note} onChange={(event) => updateBankPromo(index, "note", event.target.value)} placeholder="Nota corta" />
-                      <button type="button" onClick={() => removeBankPromo(index)}>Eliminar promo</button>
-                    </article>
-                  ))}
-                </div>
-              </section>
             </div>
             <button type="button" onClick={saveHomepageSettings}>Guardar home</button>
             <small>{message}</small>
@@ -353,6 +322,7 @@ export function AdminPanel() {
         {tab === "settings" && <SettingsTab />}
 
         {tab === "coupons" && <CouponsTab />}
+        {tab === "bank" && <BankPromosTab />}
 
         {tab === "brands" && <BrandsTab brands={brands} onChange={() => void load()} />}
 

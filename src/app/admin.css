@@ -207,3 +207,12 @@
 .tree-image{display:inline-flex;align-items:center;gap:6px}
 .tree-image img,.tree-image-empty{width:40px;height:40px;border-radius:6px;border:1px solid var(--line);background:#fff;object-fit:contain}
 .tree-image-empty{display:grid;place-items:center;font-size:11px;color:var(--muted)}
+.coupon-items{display:grid;gap:6px;margin:0 0 14px}
+.coupon-items label{display:grid;gap:4px;font-size:13px;font-weight:600;color:var(--muted)}
+.coupon-items input{padding:10px;border:1px solid var(--line);border-radius:7px;font:inherit;background:#fff;color:var(--text)}
+.coupon-found,.coupon-chosen{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.coupon-found button{width:100%;text-align:left;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--text);font:inherit;cursor:pointer}
+.coupon-chosen{display:flex;flex-wrap:wrap}.coupon-chosen li{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:13px}
+.coupon-chosen button{border:0;background:none;cursor:pointer;font-size:16px;line-height:1;color:var(--muted)}
+.coupon-item-names{display:block;max-height:3.2em;overflow:auto;color:var(--muted)}
+.brand-row select{padding:7px;border:1px solid var(--line);border-radius:7px;font:inherit;background:#fff}

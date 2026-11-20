@@ -22,9 +22,9 @@ export async function GET(request: Request) {
   const invalid = NextResponse.json({ error: "Cupón inválido o vencido." }, { status: 404 });
   if (code.length < 3) return invalid;
   await connectDb();
-  const coupon = await CouponModel.findOne({ code }).lean() as { code: string; type: string; value: number; minTotal?: number; active: boolean; endsAt?: Date | null } | null;
+  const coupon = await CouponModel.findOne({ code }).lean() as { code: string; type: string; value: number; minTotal?: number; active: boolean; endsAt?: Date | null; items?: { productId: string }[] } | null;
   if (!coupon || !isCouponUsable(coupon)) return invalid;
-  const response = NextResponse.json({ code: coupon.code, type: coupon.type, value: coupon.value, minTotal: coupon.minTotal ?? 0 });
+  const response = NextResponse.json({ code: coupon.code, type: coupon.type, value: coupon.value, minTotal: coupon.minTotal ?? 0, productIds: (coupon.items ?? []).map((item) => item.productId), endsAt: coupon.endsAt ? new Date(coupon.endsAt).toISOString() : null });
   response.headers.set("Cache-Control", "no-store");
   return response;
 }

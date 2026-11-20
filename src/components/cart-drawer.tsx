@@ -1,8 +1,8 @@
 "use client";
 
 import { FormEvent, useEffect } from "react";
-import { acceptsCoupon, buildCartMessage, buildCartUrl, cartTotals, couponBaseTotals, totalsWithCoupon } from "@/lib/cart";
-import { describeCoupon } from "@/lib/coupons";
+import { buildCartMessage, buildCartUrl, cartTotals, couponAppliesTo, couponBaseTotals, totalsWithCoupon } from "@/lib/cart";
+import { couponCovers, describeCoupon, timeLeftLabel } from "@/lib/coupons";
 import { branchLocation, phoneDigits } from "@/lib/branch-contact";
 import { normalizeImageUrl } from "@/lib/image-url";
 import { ImagePlaceholder } from "./image-placeholder";
@@ -25,8 +25,10 @@ export function CartDrawer() {
   if (!open) return null;
   const visible = lines.filter((line) => products.has(line.id));
   const subtotal = cartTotals(visible, products);
-  const totals = totalsWithCoupon(subtotal, coupon, couponBaseTotals(visible, products));
-  const excluded = visible.filter((line) => !acceptsCoupon(products.get(line.id)!)).length;
+  const totals = totalsWithCoupon(subtotal, coupon, couponBaseTotals(visible, products, coupon));
+  const excluded = visible.filter((line) => { const product = products.get(line.id)!; return couponCovers(coupon ?? {}, product.id) && !couponAppliesTo(product, null); }).length;
+  const limited = !!coupon?.productIds?.length;
+  const left = coupon?.endsAt ? timeLeftLabel(coupon.endsAt) : "";
   const message = visible.length ? buildCartMessage(visible, products, window.location.origin, coupon) : "";
   // con sucursales: la elegida; sin ninguna con WhatsApp: el número general, como antes
   const phone = selected ? phoneDigits(selected) : branches.length === 0 ? fallbackPhone : "";
@@ -54,7 +56,7 @@ export function CartDrawer() {
               <b>{product.name}</b>
               {product.sku ? <small>SKU {product.sku}</small> : null}
               <span>Efectivo {money(product.cashPrice)} · Contado {money(product.listPrice)}</span>
-              {coupon && !acceptsCoupon(product) ? <small className="cart-line-nocoupon">Sin cupón</small> : null}
+              {coupon && !couponAppliesTo(product, coupon) ? <small className="cart-line-nocoupon">Sin cupón</small> : null}
               <div className="cart-qty">
                 <button type="button" onClick={() => changeQty(line.id, line.qty - 1)} aria-label="Quitar uno">−</button>
                 <span>{line.qty}</span>
@@ -67,7 +69,7 @@ export function CartDrawer() {
       </div>
       {visible.length > 0 ? <footer className="cart-foot">
         {coupon ? <div className="cart-coupon applied">
-          <span><b>Cupón {coupon.code}</b><small>{hasDiscount ? describeCoupon(coupon) : `Se aplica ${describeCoupon(coupon).split("en compras ")[1] ?? "en compras mayores"}`}</small></span>
+          <span><b>Cupón {coupon.code}</b><small>{hasDiscount ? describeCoupon(coupon) : `Se aplica ${describeCoupon(coupon).split("en compras ")[1] ?? "en compras mayores"}`}{limited ? " · solo en artículos seleccionados" : ""}{left && left !== "vencido" ? ` · vence en ${left}` : ""}</small></span>
           <button type="button" onClick={removeCoupon}>Quitar</button>
         </div> : <form className="cart-coupon" onSubmit={submitCoupon}>
           <input name="coupon" placeholder="¿Tenés un cupón de descuento?" autoComplete="off" maxLength={24} aria-label="Código de cupón" />

@@ -7,22 +7,23 @@ import { normalizeImageUrl } from "@/lib/image-url";
 
 const homepageKey = "main";
 
+// cada pestaña del admin guarda solo lo suyo (Home o Promos bancarias): lo que no se envía no se toca
 const schema = z.object({
-  bestSellerIds: z.array(z.string().min(1)).max(3).default([]),
-  offerIds: z.array(z.string().min(1)).max(3).default([]),
-  offerTimers: z.array(z.object({ productId: z.string().min(1), endsAt: z.string().max(40).default("") })).max(3).default([]),
-  heroImages: z.array(z.string().max(500)).max(10).default([]),
+  bestSellerIds: z.array(z.string().min(1)).max(3).optional(),
+  offerIds: z.array(z.string().min(1)).max(3).optional(),
+  offerTimers: z.array(z.object({ productId: z.string().min(1), endsAt: z.string().max(40).default("") })).max(3).optional(),
+  heroImages: z.array(z.string().max(500)).max(10).optional(),
   carouselSlides: z.array(z.object({
     tag: z.string().max(40),
     title: z.string().max(80),
     text: z.string().max(180),
     image: z.string().max(300).regex(/^(|https:\/\/\S+|\/api\/uploads\/\S+)$/).default("")
-  })).default([]),
+  })).optional(),
   bankPromotions: z.array(z.object({
     title: z.string().max(60),
     description: z.string().max(180),
     note: z.string().max(80)
-  })).default([])
+  })).max(20).optional()
 });
 
 async function getOrCreateHomepageSettings() {
@@ -50,20 +51,14 @@ export async function PUT(request: Request) {
   const payload = schema.safeParse(await request.json());
   if (!payload.success) return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
   await connectDb();
-  await HomepageSettingsModel.updateOne(
-    { key: homepageKey },
-    {
-      $set: {
-        key: homepageKey,
-        bestSellerIds: payload.data.bestSellerIds,
-        offerIds: payload.data.offerIds,
-        offerTimers: payload.data.offerTimers.filter((timer) => payload.data.offerIds.includes(timer.productId)),
-        heroImages: payload.data.heroImages.map((image) => normalizeImageUrl(image)),
-        carouselSlides: payload.data.carouselSlides.map((slide) => ({ ...slide, image: normalizeImageUrl(slide.image, 1000) })),
-        bankPromotions: payload.data.bankPromotions
-      }
-    },
-    { upsert: true }
-  );
+  const { bestSellerIds, offerIds, offerTimers, heroImages, carouselSlides, bankPromotions } = payload.data;
+  const set: Record<string, unknown> = { key: homepageKey };
+  if (bestSellerIds) set.bestSellerIds = bestSellerIds;
+  if (offerIds) set.offerIds = offerIds;
+  if (offerTimers) set.offerTimers = offerIds ? offerTimers.filter((timer) => offerIds.includes(timer.productId)) : offerTimers;
+  if (heroImages) set.heroImages = heroImages.map((image) => normalizeImageUrl(image));
+  if (carouselSlides) set.carouselSlides = carouselSlides.map((slide) => ({ ...slide, image: normalizeImageUrl(slide.image, 1000) }));
+  if (bankPromotions) set.bankPromotions = bankPromotions;
+  await HomepageSettingsModel.updateOne({ key: homepageKey }, { $set: set }, { upsert: true });
   return NextResponse.json({ ok: true });
 }

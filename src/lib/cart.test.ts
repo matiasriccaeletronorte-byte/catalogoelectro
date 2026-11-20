@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addLine, buildCartMessage, buildCartUrl, cartCount, cartTotals, MAX_CART_LINES, parseStoredCart, removeLine, setQty, totalsWithCoupon, acceptsCoupon, couponBaseTotals } from "./cart";
+import { addLine, buildCartMessage, buildCartUrl, cartCount, cartTotals, MAX_CART_LINES, parseStoredCart, removeLine, setQty, totalsWithCoupon, acceptsCoupon, couponAppliesTo, couponBaseTotals } from "./cart";
 import type { Product } from "./types";
 
 const p = (id: string, cash: number, list: number): Product => ({ id, sku: `S-${id}`, name: `Art ${id}`, description: "", cashPrice: cash, listPrice: list, available: true, category: "c", outlet: false, image: "" });
@@ -68,5 +68,25 @@ describe("cart", () => {
     const lines = [{ id: "a", qty: 1 }];
     const coupon = { code: "X", type: "fixed" as const, value: 300, minTotal: 0 };
     expect(totalsWithCoupon(cartTotals(lines, products), coupon, couponBaseTotals(lines, products))).toEqual({ cash: 1000, list: 1200, cashDiscount: 0, listDiscount: 0 });
+  });
+});
+
+describe("cupón con lista de artículos en el carrito", () => {
+  const products = new Map([["a", p("a", 1000, 1000)], ["b", p("b", 2000, 2000)], ["c", p("c", 500, 500)]]);
+  const lines = [{ id: "a", qty: 1 }, { id: "b", qty: 1 }, { id: "c", qty: 2 }];
+  const coupon = { code: "X", type: "percent" as const, value: 10, minTotal: 0, productIds: ["a", "c"] };
+  it("la base del descuento incluye solo los artículos del cupón", () => {
+    expect(couponBaseTotals(lines, products, coupon)).toEqual({ cash: 2000, list: 2000 });
+    expect(totalsWithCoupon(cartTotals(lines, products), coupon, couponBaseTotals(lines, products, coupon))).toEqual({ cash: 3800, list: 3800, cashDiscount: 200, listDiscount: 200 });
+  });
+  it("la compra mínima cuenta solo los artículos del cupón", () => {
+    const strict = { ...coupon, minTotal: 2500 };
+    expect(totalsWithCoupon(cartTotals(lines, products), strict, couponBaseTotals(lines, products, strict)).cashDiscount).toBe(0);
+  });
+  it("couponAppliesTo combina la lista con la regla del precio en efectivo", () => {
+    expect(couponAppliesTo(products.get("a")!, coupon)).toBe(true);
+    expect(couponAppliesTo(products.get("b")!, coupon)).toBe(false);
+    expect(couponAppliesTo(p("d", 1000, 1200), { ...coupon, productIds: [] })).toBe(false);
+    expect(couponAppliesTo(products.get("b")!, null)).toBe(true);
   });
 });

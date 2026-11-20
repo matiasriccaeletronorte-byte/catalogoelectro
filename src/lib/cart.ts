@@ -1,4 +1,4 @@
-import { discountFor, type PublicCoupon } from "./coupons";
+import { couponCovers, discountFor, type PublicCoupon } from "./coupons";
 import type { Product } from "./types";
 
 export type CartLine = { id: string; qty: number };
@@ -54,9 +54,13 @@ export function cartTotals(lines: CartLine[], products: Map<string, Product>) {
 /** El cupón no vale para artículos que ya tienen el precio en efectivo más bajo que el de contado. */
 export const acceptsCoupon = (product: Pick<Product, "cashPrice" | "listPrice">): boolean => product.cashPrice >= product.listPrice;
 
+/** El cupón alcanza a este artículo: está en su lista (si tiene) y su precio en efectivo no es menor al de contado. */
+export const couponAppliesTo = (product: Pick<Product, "id" | "cashPrice" | "listPrice">, coupon: PublicCoupon | null): boolean =>
+  acceptsCoupon(product) && (!coupon || couponCovers(coupon, product.id));
+
 /** Totales de los artículos que sí participan del cupón. */
-export function couponBaseTotals(lines: CartLine[], products: Map<string, Product>) {
-  return cartTotals(lines.filter((line) => { const product = products.get(line.id); return !!product && acceptsCoupon(product); }), products);
+export function couponBaseTotals(lines: CartLine[], products: Map<string, Product>, coupon: PublicCoupon | null = null) {
+  return cartTotals(lines.filter((line) => { const product = products.get(line.id); return !!product && couponAppliesTo(product, coupon); }), products);
 }
 
 /** Totales con el cupón aplicado: el descuento se calcula sobre cada total por separado, solo sobre `base` (los artículos que participan). */
@@ -74,7 +78,7 @@ export function buildCartMessage(lines: CartLine[], products: Map<string, Produc
     const sku = p.sku ? ` (código ${p.sku})` : "";
     return `• ${line.qty} x ${p.name}${sku}\n  Efectivo ${money(p.cashPrice)} · Contado ${money(p.listPrice)} c/u\n  ${origin}/productos/${p.id}`;
   });
-  const totals = totalsWithCoupon(cartTotals(lines, products), coupon, couponBaseTotals(lines, products));
+  const totals = totalsWithCoupon(cartTotals(lines, products), coupon, couponBaseTotals(lines, products, coupon));
   const hasDiscount = totals.cashDiscount > 0 || totals.listDiscount > 0;
   return [
     "Hola, quiero consultar por este pedido:",

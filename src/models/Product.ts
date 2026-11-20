@@ -12,6 +12,8 @@ const productSchema = new Schema({
   active: { type: Boolean, default: true },
   category: { type: String, required: true, trim: true },
   subCategory: { type: String, default: "", trim: true },
+  categoryId: { type: Schema.Types.ObjectId, default: null },
+  categoryPath: { type: [Schema.Types.ObjectId], default: [] },
   brand: { type: String, default: "", trim: true },
   features: { type: [String], default: [] },
   outlet: { type: Boolean, default: false },
@@ -23,6 +25,8 @@ const productSchema = new Schema({
 productSchema.index({ active: 1, category: 1, subCategory: 1, brand: 1, listPrice: 1 });
 productSchema.index({ active: 1, createdAt: -1 });
 productSchema.index({ active: 1, listPrice: 1 });
+productSchema.index({ categoryPath: 1, active: 1 });
+productSchema.index({ categoryId: 1 });
 
 export type ProductDocument = InferSchemaType<typeof productSchema>;
 export const ProductModel = models.Product || model("Product", productSchema);

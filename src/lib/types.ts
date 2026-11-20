@@ -8,6 +8,7 @@ export type Product = {
   available: boolean;
   category: string;
   subCategory?: string;
+  categoryId?: string;
   brand?: string;
   features?: string[];
   outlet: boolean;

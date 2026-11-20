@@ -21,8 +21,8 @@ const countBy = (field: string): PipelineStage.FacetPipelineStage[] => [{ $match
 const toCounts = (rows: { _id: string; count: number }[]): FacetCount[] => rows.map((r) => ({ value: r._id, count: r.count }));
 
 export function toPublicProduct(row: Record<string, unknown>): Product {
-  const { _id, searchText, stock, active, createdAt, updatedAt, __v, ...rest } = row;
-  return { ...(rest as Omit<Product, "id">), id: String(_id) };
+  const { _id, searchText, stock, active, createdAt, updatedAt, __v, categoryPath, categoryId, ...rest } = row;
+  return { ...(rest as Omit<Product, "id">), id: String(_id), ...(categoryId ? { categoryId: String(categoryId) } : {}) };
 }
 
 export async function runCatalogQuery(f: CatalogFilters): Promise<CatalogResult> {

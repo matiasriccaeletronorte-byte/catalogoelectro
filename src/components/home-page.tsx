@@ -36,10 +36,11 @@ const defaultSlides = [
 ];
 
 
-export function HomePage({ shelves, categoryTiles, homepage, featured }: { shelves: HomeShelves; categoryTiles: CategoryTile[]; homepage: HomepageSettings; featured: Product[] }) {
+export function HomePage({ shelves, categoryTiles, homepage, featured, categoryHrefs }: { shelves: HomeShelves; categoryTiles: CategoryTile[]; homepage: HomepageSettings; featured: Product[]; categoryHrefs: Record<string, string> }) {
   const { branches } = useSiteSettings();
   const router = useRouter();
   const featuredProducts = featured;
+  const hrefFor = (name: string) => categoryHrefs[name] ?? `/catalogo?category=${encodeURIComponent(name)}`;
   const [slide, setSlide] = useState(0);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(() => Date.now());
@@ -163,11 +164,11 @@ export function HomePage({ shelves, categoryTiles, homepage, featured }: { shelv
         </div>
       </section>
 
-      <CategoryStrip tiles={categoryTiles} />
+      <CategoryStrip tiles={categoryTiles} hrefFor={hrefFor} />
 
       <ProductShelf eyebrow="Outlet" title="Oportunidades outlet" href="/catalogo" items={shelves.outlet} />
       {shelves.categories.map((shelf) => (
-        <ProductShelf key={shelf.name} eyebrow={`${shelf.total} producto${shelf.total === 1 ? "" : "s"}`} title={shelf.name} href={`/catalogo?category=${encodeURIComponent(shelf.name)}`} items={shelf.items} />
+        <ProductShelf key={shelf.name} eyebrow={`${shelf.total} producto${shelf.total === 1 ? "" : "s"}`} title={shelf.name} href={hrefFor(shelf.name)} items={shelf.items} />
       ))}
 
       {bestSellers.length > 0 ? <section id="mas-vendidos" className="offers">

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { CategoryTile } from "@/lib/home-categories";
 
-export function CategoryStrip({ tiles }: { tiles: CategoryTile[] }) {
+export function CategoryStrip({ tiles, hrefFor }: { tiles: CategoryTile[]; hrefFor: (name: string) => string }) {
   const track = useRef<HTMLDivElement>(null);
   const [overflow, setOverflow] = useState(false);
 
@@ -29,7 +29,7 @@ export function CategoryStrip({ tiles }: { tiles: CategoryTile[] }) {
   return <section className={`category-strip${overflow ? " scrolls" : ""}`} aria-label="Categorías">
     {overflow ? <button type="button" className="strip-arrow previous" onClick={() => scroll(-1)} aria-label="Categorías anteriores">‹</button> : null}
     <div className="strip-track" ref={track}>
-      {tiles.map((tile) => <Link key={tile.name} href={`/catalogo?category=${encodeURIComponent(tile.name)}`} className="strip-item">
+      {tiles.map((tile) => <Link key={tile.name} href={hrefFor(tile.name)} className="strip-item">
         <span className="strip-image">{/^https?:|^\//.test(tile.image) ? <img src={tile.image} alt="" loading="lazy" width={96} height={96} /> : <span className="strip-monogram" aria-hidden="true">{tile.name.trim().charAt(0).toUpperCase()}</span>}</span>
         <span className="strip-name">{tile.name}</span>
       </Link>)}

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cache } from "react";
+import { loadNodes } from "@/lib/category-store";
+import { categoryHref, nodePath } from "@/lib/category-tree";
 import { connectDb } from "@/lib/db";
 import { ProductModel } from "@/models/Product";
 import { ProductDetail } from "@/components/product-detail";
@@ -42,9 +44,14 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const product = await loadProduct((await params).id);
   if (!product) notFound();
   const base = siteUrl();
+  const nodes = await loadNodes();
+  const path = product.categoryId ? nodePath(nodes, product.categoryId) : [];
+  const trail = path.length > 0
+    ? [{ name: "Inicio", href: "/" }, ...path.map((node, index) => ({ name: node.name, href: categoryHref(path.slice(0, index + 1)) })), { name: product.name }]
+    : [{ name: "Inicio", href: "/" }, { name: product.category, href: `/catalogo?category=${encodeURIComponent(product.category)}` }, { name: product.name }];
   return <>
     <JsonLd data={productJsonLd(product, base)} />
-    <JsonLd data={breadcrumbJsonLd(base, [{ name: "Inicio", path: "/" }, { name: product.category, path: `/catalogo?category=${encodeURIComponent(product.category)}` }, { name: product.name, path: `/productos/${product.id}` }])} />
-    <ProductDetail product={product} />
+    <JsonLd data={breadcrumbJsonLd(base, trail.map((crumb) => ({ name: crumb.name, path: crumb.href ?? `/productos/${product.id}` })))} />
+    <ProductDetail product={product} trail={trail} />
   </>;
 }

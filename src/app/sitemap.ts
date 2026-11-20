@@ -1,4 +1,6 @@
 import type { MetadataRoute } from "next";
+import { countsByNode, loadNodes } from "@/lib/category-store";
+import { categoryHref, nodePath } from "@/lib/category-tree";
 import { connectDb } from "@/lib/db";
 import { siteUrl } from "@/lib/site-url";
 import { ProductModel } from "@/models/Product";
@@ -19,9 +21,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ProductModel.distinct("category", { ...active, category: { $nin: ["", null] } }) as Promise<string[]>,
       ProductModel.find(active, { updatedAt: 1 }).sort({ _id: 1 }).limit(45000).lean() as unknown as Promise<{ _id: unknown; updatedAt?: Date }[]>
     ]);
+    const [nodes, counts] = await Promise.all([loadNodes(), countsByNode(false)]);
+    const treeUrls = nodes
+      .filter((node) => (counts[node.id] ?? 0) > 0)
+      .map((node) => ({ url: `${base}${categoryHref(nodePath(nodes, node.id))}`, changeFrequency: "daily" as const, priority: 0.8 }));
     return [
       ...fixed,
-      ...categories.map((name) => ({ url: `${base}/catalogo?category=${encodeURIComponent(name)}`, changeFrequency: "daily" as const, priority: 0.8 })),
+      ...(treeUrls.length > 0 ? treeUrls : categories.map((name) => ({ url: `${base}/catalogo?category=${encodeURIComponent(name)}`, changeFrequency: "daily" as const, priority: 0.8 }))),
       ...products.map((product) => ({ url: `${base}/productos/${String(product._id)}`, lastModified: product.updatedAt, changeFrequency: "weekly" as const, priority: 0.7 }))
     ];
   } catch {

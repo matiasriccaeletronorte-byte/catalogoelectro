@@ -9,9 +9,9 @@ export function BranchPicker({ branches, current, onChoose, onClose }: { branche
 
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
-    panel.current?.querySelector<HTMLElement>("button.branch-option")?.focus();
+    panel.current?.focus(); // el foco va al cuadro y no a la primera sucursal, para que no parezca ya elegida
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") { onClose(); return; }
+      if (event.key === "Escape") { event.stopPropagation(); onClose(); return; } // no cierra también el pedido que está detrás
       if (event.key !== "Tab" || !panel.current) return;
       const items = [...panel.current.querySelectorAll<HTMLElement>("button")];
       if (items.length === 0) return;
@@ -25,7 +25,7 @@ export function BranchPicker({ branches, current, onChoose, onClose }: { branche
   }, [onClose]);
 
   return <div className="branch-overlay" onClick={onClose}>
-    <div className="branch-picker" role="dialog" aria-modal="true" aria-labelledby="branch-picker-title" ref={panel} onClick={(event) => event.stopPropagation()}>
+    <div className="branch-picker" role="dialog" aria-modal="true" aria-labelledby="branch-picker-title" tabIndex={-1} ref={panel} onClick={(event) => event.stopPropagation()}>
       <button type="button" className="branch-close" onClick={onClose} aria-label="Cerrar">✕</button>
       <h2 id="branch-picker-title">¿A qué sucursal querés escribir?</h2>
       <p className="branch-note">Ambas sucursales están en <b>Malvinas Argentinas</b>, Provincia de Buenos Aires (no en CABA).</p>

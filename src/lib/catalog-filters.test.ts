@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Types } from "mongoose";
-import { buildAdminMatch, buildMatch, MAX_PAGE, parseFilters, serializeFilters } from "./catalog-filters";
+import { MAX_PAGE, parseFilters, serializeFilters } from "./catalog-filters";
+import { buildAdminMatch, buildMatch } from "./catalog-match";
 
 const parse = (qs: string) => parseFilters(new URLSearchParams(qs));
 

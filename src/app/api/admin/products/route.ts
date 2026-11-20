@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { isAdmin, unauthorized } from "@/lib/admin-auth";
-import { buildAdminMatch, parseFilters } from "@/lib/catalog-filters";
+import { parseFilters } from "@/lib/catalog-filters";
+import { buildAdminMatch } from "@/lib/catalog-match";
 import { toPublicProduct } from "@/lib/catalog-query";
 import { categoryFieldsFor } from "@/lib/category-store";
 import { connectDb } from "@/lib/db";

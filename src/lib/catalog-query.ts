@@ -1,5 +1,6 @@
 import { connectDb } from "@/lib/db";
-import { buildMatch, CatalogFilters, PAGE_SIZE } from "@/lib/catalog-filters";
+import { CatalogFilters, PAGE_SIZE } from "@/lib/catalog-filters";
+import { buildMatch } from "@/lib/catalog-match";
 import { loadNodes } from "@/lib/category-store";
 import { childrenWithCounts, type CategoryChild } from "@/lib/category-tree";
 import { Product } from "@/lib/types";

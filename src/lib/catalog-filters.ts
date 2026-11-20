@@ -1,4 +1,3 @@
-import { Types } from "mongoose";
 import { normalizeText } from "@/lib/text";
 
 export type SortKey = "relevance" | "price_asc" | "price_desc" | "newest";
@@ -9,8 +8,8 @@ export type CatalogFilters = {
 
 export const PAGE_SIZE = 24;
 export const MAX_PAGE = 1000;
-const MAX_QUERY_LENGTH = 100;
-const MAX_WORDS = 8;
+export const MAX_QUERY_LENGTH = 100;
+export const MAX_WORDS = 8;
 const MAX_BRANDS = 20;
 const SORTS: SortKey[] = ["relevance", "price_asc", "price_desc", "newest"];
 
@@ -52,36 +51,4 @@ export function serializeFilters(f: CatalogFilters): URLSearchParams {
   if (f.sort !== "relevance") p.set("sort", f.sort);
   if (f.page > 1) p.set("page", String(f.page));
   return p;
-}
-
-const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-export function buildMatch(f: CatalogFilters, omit?: "category" | "subCategory" | "brand" | "price"): Record<string, unknown> {
-  const match: Record<string, unknown> = { active: { $ne: false } };
-  if (f.availableOnly) match.available = true;
-  if (f.outletOnly) match.outlet = true;
-  if (omit !== "category" && omit !== "subCategory" && f.category) match.category = f.category;
-  if (omit !== "category" && omit !== "subCategory" && f.subCategory) match.subCategory = f.subCategory;
-  if (omit !== "category" && omit !== "subCategory" && f.categoryId) match.categoryPath = new Types.ObjectId(f.categoryId);
-  if (omit === "subCategory" && f.category) match.category = f.category;
-  if (omit !== "brand" && f.brands.length > 0) match.brand = { $in: f.brands };
-  if (omit !== "price" && (f.minPrice !== undefined || f.maxPrice !== undefined)) {
-    const range: Record<string, number> = {};
-    if (f.minPrice !== undefined) range.$gte = f.minPrice;
-    if (f.maxPrice !== undefined) range.$lte = f.maxPrice;
-    match.listPrice = range;
-  }
-  const andWords = searchClauses(f.q);
-  if (andWords.length > 0) match.$and = andWords;
-  return match;
-}
-
-function searchClauses(q: string) {
-  return normalizeText(q).split(" ").filter(Boolean).slice(0, MAX_WORDS).map((w) => ({ searchText: { $regex: escapeRegex(w) } }));
-}
-
-/** Filtro del listado del admin: incluye artículos desactivados para poder reactivarlos. */
-export function buildAdminMatch(q: string): Record<string, unknown> {
-  const clauses = searchClauses(q.trim().slice(0, MAX_QUERY_LENGTH));
-  return clauses.length > 0 ? { $and: clauses } : {};
 }

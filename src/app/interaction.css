@@ -350,3 +350,9 @@ button.whatsapp-fab{border:0;cursor:pointer}
 .branch-picker:focus{outline:none}
 
 .product-breadcrumb .crumb{display:inline-flex;align-items:center;gap:10px;min-width:0}
+
+.filters-panel a.facet-sub-link,.filters-panel a.facet-back{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--line);color:var(--text);text-decoration:none;font-size:14px;font-weight:600}
+.filters-panel a.facet-sub-link span{margin-left:auto;color:var(--muted);font-size:12px;font-weight:500}
+.filters-panel a.facet-sub-link:hover{color:var(--brand)}
+.filters-panel a.facet-back{color:var(--brand);font-weight:800;font-size:13px}
+.filters-panel .facet-current{display:block;padding:10px 0;font-size:15px;border-bottom:1px solid var(--line)}

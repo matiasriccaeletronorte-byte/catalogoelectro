@@ -6,14 +6,21 @@ import { CatalogFilters, PAGE_SIZE, parseFilters, serializeFilters, SortKey } fr
 import type { CatalogResult } from "@/lib/catalog-query";
 import { CatalogFiltersPanel } from "./catalog-filters-panel";
 import { ProductCard } from "./product-card";
+import { Breadcrumb } from "./breadcrumb";
+import { categoryHref } from "@/lib/category-tree";
 
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [{ key: "price_asc", label: "Menor precio" }, { key: "price_desc", label: "Mayor precio" }];
 const pesos = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
 
-export function Catalog({ initialResult = null, initialQuery = "" }: { initialResult?: CatalogResult | null; initialQuery?: string }) {
+export type CatalogNode = { id: string; name: string; pathSlugs: string[]; trail: { name: string; href: string }[] };
+
+export function Catalog({ node = null, initialResult = null, initialQuery = "" }: { node?: CatalogNode | null; initialResult?: CatalogResult | null; initialQuery?: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const filters = parseFilters(new URLSearchParams(searchParams.toString()));
+  const filters = { ...parseFilters(new URLSearchParams(searchParams.toString())), categoryId: node?.id ?? "" };
+  const basePath = node ? categoryHref(node.pathSlugs.map((slug) => ({ slug }))) : "/catalogo";
+  const parentHref = node && node.pathSlugs.length > 1 ? categoryHref(node.pathSlugs.slice(0, -1).map((slug) => ({ slug }))) : "/catalogo";
+  const linkSuffix = serializeFilters({ ...filters, categoryId: "", category: "", subCategory: "", page: 1 }).toString();
   const queryString = serializeFilters(filters).toString();
   const [result, setResult] = useState<CatalogResult | null>(initialResult);
   const [loading, setLoading] = useState(initialResult === null);
@@ -36,13 +43,14 @@ export function Catalog({ initialResult = null, initialQuery = "" }: { initialRe
   }, [queryString]);
 
   function update(patch: Partial<CatalogFilters>) {
-    const next = { ...filters, page: 1, ...patch };
+    const next = { ...filters, page: 1, ...patch, categoryId: "" };
     const qs = serializeFilters(next).toString();
-    router.push(qs ? `/catalogo?${qs}` : "/catalogo", { scroll: false });
+    window.history.pushState(null, "", qs ? `${basePath}?${qs}` : basePath);
   }
 
   const chips: { label: string; remove: () => void }[] = [];
   if (filters.q) chips.push({ label: `“${filters.q}”`, remove: () => update({ q: "" }) });
+  if (node) chips.push({ label: node.name, remove: () => router.push(parentHref) });
   if (filters.category) chips.push({ label: filters.category, remove: () => update({ category: "", subCategory: "" }) });
   if (filters.subCategory) chips.push({ label: filters.subCategory, remove: () => update({ subCategory: "" }) });
   filters.brands.forEach((brand) => chips.push({ label: brand, remove: () => update({ brands: filters.brands.filter((b) => b !== brand) }) }));
@@ -61,11 +69,12 @@ export function Catalog({ initialResult = null, initialQuery = "" }: { initialRe
     <div className="catalog-mobile-bar">
       <button type="button" aria-expanded={panelOpen} onClick={() => setPanelOpen(!panelOpen)}>Filtros{chips.length ? ` (${chips.length})` : ""} {panelOpen ? "▴" : "▾"}</button>
     </div>
-    <CatalogFiltersPanel filters={filters} facets={result?.facets} open={panelOpen} onChange={update} />
+    <CatalogFiltersPanel filters={filters} facets={result?.facets} open={panelOpen} onChange={update} node={node} suffix={linkSuffix} />
     <div className="catalog-content">
       <div className="catalog-toolbar">
         <div className="section-head">
-          <h1>{filters.category || (filters.outletOnly ? "Outlet" : "Todos los productos")}</h1>
+          {node ? <Breadcrumb trail={[{ name: "Inicio", href: "/" }, { name: "Catálogo", href: "/catalogo" }, ...node.trail.slice(0, -1), { name: node.name }]} /> : null}
+          <h1>{node?.name || filters.category || (filters.outletOnly ? "Outlet" : "Todos los productos")}</h1>
           <div className="catalog-summary">{result ? <span><strong>{result.total}</strong> producto{result.total === 1 ? "" : "s"}</span> : null}</div>
         </div>
         <label className="catalog-sort">Ordenar por

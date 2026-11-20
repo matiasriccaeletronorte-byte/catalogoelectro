@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
+import { Types } from "mongoose";
 import { buildAdminMatch, buildMatch, MAX_PAGE, parseFilters, serializeFilters } from "./catalog-filters";
 
 const parse = (qs: string) => parseFilters(new URLSearchParams(qs));
 
 describe("parseFilters", () => {
   it("valores por defecto", () => {
-    expect(parse("")).toEqual({ q: "", category: "", subCategory: "", brands: [], minPrice: undefined, maxPrice: undefined, availableOnly: false, outletOnly: false, sort: "relevance", page: 1 });
+    expect(parse("")).toEqual({ q: "", category: "", subCategory: "", categoryId: "", brands: [], minPrice: undefined, maxPrice: undefined, availableOnly: false, outletOnly: false, sort: "relevance", page: 1 });
   });
   it("normaliza valores inválidos", () => {
     const f = parse("page=-3&minPrice=abc&maxPrice=-5&sort=xyz");
@@ -79,5 +80,19 @@ describe("hallazgos de la revisión", () => {
     expect(serializeFilters(f).get("outlet")).toBe("1");
     expect(buildMatch(f).outlet).toBe(true);
     expect(buildMatch(parse("")).outlet).toBeUndefined();
+  });
+});
+
+describe("categoryId (rama del árbol)", () => {
+  it("categoryId: acepta un id válido y descarta el resto", () => {
+    expect(parseFilters(new URLSearchParams(`cat=${"a".repeat(24)}`)).categoryId).toBe("a".repeat(24));
+    expect(parseFilters(new URLSearchParams("cat=xyz")).categoryId).toBe("");
+    expect(parseFilters(new URLSearchParams()).categoryId).toBe("");
+  });
+  it("categoryId se serializa como cat y filtra por la rama", () => {
+    const f = { ...parseFilters(new URLSearchParams()), categoryId: "a".repeat(24) };
+    expect(serializeFilters(f).get("cat")).toBe("a".repeat(24));
+    expect(buildMatch(f).categoryPath).toEqual(new Types.ObjectId("a".repeat(24)));
+    expect(buildMatch(f, "category")).not.toHaveProperty("categoryPath");
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  buildMenuTree, buildTree, canMove, categoryHref, CategoryNodeData, derivedFields, descendantIds, findByName, formatPath,
+  buildMenuTree, buildTree, canMove, categoryHref, childrenWithCounts, legacyCategoryHref, CategoryNodeData, derivedFields, descendantIds, findByName, formatPath,
   missingPaths, nodePath, normalizeName, parsePathText, productPathText, resolveSlugs, slugify, uniqueSlug, validCategoryName
 } from "./category-tree";
 
@@ -174,5 +174,32 @@ describe("productPathText", () => {
   });
   it("acepta ids que no son texto (ObjectId)", () => {
     expect(productPathText(sample, { categoryId: { toString: () => "3" } })).toBe("Climatización > Aires acondicionados > Split");
+  });
+});
+
+describe("childrenWithCounts", () => {
+  const counts = { "1": 10, "2": 6, "3": 4, "4": 0, "5": 4, "6": 2, "7": 1 };
+  it("hijos con artículos, ordenados, con su cantidad", () => {
+    expect(childrenWithCounts(sample, "1", counts).map((c) => [c.name, c.count])).toEqual([["Aires acondicionados", 6], ["Calefacción", 4]]);
+  });
+  it("sin padre son las categorías de primer nivel (Otros al final)", () => {
+    expect(childrenWithCounts(sample, null, counts).map((c) => c.name)).toEqual(["Climatización", "Hogar", "Otros"]);
+  });
+  it("omite los que no tienen artículos", () => {
+    expect(childrenWithCounts(sample, "2", counts).map((c) => c.name)).toEqual(["Split"]);
+  });
+});
+
+describe("legacyCategoryHref", () => {
+  it("resuelve nombres viejos sin distinguir tildes ni mayúsculas", () => {
+    expect(legacyCategoryHref(sample, "CLIMATIZACION")).toBe("/catalogo/climatizacion");
+    expect(legacyCategoryHref(sample, "climatización", "aires  acondicionados")).toBe("/catalogo/climatizacion/aires-acondicionados");
+  });
+  it("subcategoría desconocida lleva a la categoría", () => {
+    expect(legacyCategoryHref(sample, "Climatización", "No existe")).toBe("/catalogo/climatizacion");
+  });
+  it("categoría desconocida o vacía da null", () => {
+    expect(legacyCategoryHref(sample, "No existe")).toBeNull();
+    expect(legacyCategoryHref(sample, "  ")).toBeNull();
   });
 });

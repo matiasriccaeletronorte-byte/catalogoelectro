@@ -1,5 +1,7 @@
 import { connectDb } from "@/lib/db";
 import { buildMatch, CatalogFilters, PAGE_SIZE } from "@/lib/catalog-filters";
+import { loadNodes } from "@/lib/category-store";
+import { childrenWithCounts, type CategoryChild } from "@/lib/category-tree";
 import { Product } from "@/lib/types";
 import { ProductModel } from "@/models/Product";
 import type { PipelineStage } from "mongoose";
@@ -7,7 +9,7 @@ import type { PipelineStage } from "mongoose";
 export type FacetCount = { value: string; count: number };
 export type CatalogResult = {
   items: Product[]; total: number; page: number; pageSize: number;
-  facets: { categories: FacetCount[]; subCategories: FacetCount[]; brands: FacetCount[]; price: { min: number; max: number } };
+  facets: { categories: FacetCount[]; subCategories: FacetCount[]; categoryChildren: CategoryChild[]; brands: FacetCount[]; price: { min: number; max: number } };
 };
 
 const SORTS: Record<string, Record<string, 1 | -1>> = {
@@ -28,17 +30,19 @@ export function toPublicProduct(row: Record<string, unknown>): Product {
 export async function runCatalogQuery(f: CatalogFilters): Promise<CatalogResult> {
   await connectDb();
   const sort: Record<string, 1 | -1> = f.q && f.sort === "relevance" ? { name: 1 } : SORTS[f.sort];
-  const [rows, [facets]] = await Promise.all([
+  const [rows, [facets], nodes] = await Promise.all([
     ProductModel.find(buildMatch(f)).sort({ ...sort, _id: 1 }).skip((f.page - 1) * PAGE_SIZE).limit(PAGE_SIZE).lean(),
     ProductModel.aggregate([{
       $facet: {
         total: [{ $match: buildMatch(f) }, { $count: "n" }],
         categories: [{ $match: buildMatch(f, "category") }, ...countBy("category")],
         subCategories: [{ $match: buildMatch(f, "subCategory") }, ...countBy("subCategory")],
+        nodeCounts: [{ $match: buildMatch(f) }, { $unwind: "$categoryPath" }, { $group: { _id: "$categoryPath", count: { $sum: 1 } } }],
         brands: [{ $match: buildMatch(f, "brand") }, ...countBy("brand")],
         price: [{ $match: buildMatch(f, "price") }, { $group: { _id: null, min: { $min: "$listPrice" }, max: { $max: "$listPrice" } } }]
       }
-    }])
+    }]),
+    loadNodes()
   ]);
   return {
     items: rows.map((row) => toPublicProduct(row as unknown as Record<string, unknown>)),
@@ -48,6 +52,7 @@ export async function runCatalogQuery(f: CatalogFilters): Promise<CatalogResult>
     facets: {
       categories: toCounts(facets.categories),
       subCategories: f.category ? toCounts(facets.subCategories) : [],
+      categoryChildren: childrenWithCounts(nodes, f.categoryId || null, Object.fromEntries((facets.nodeCounts as { _id: unknown; count: number }[]).map((row) => [String(row._id), row.count]))),
       brands: toCounts(facets.brands),
       price: { min: facets.price[0]?.min ?? 0, max: facets.price[0]?.max ?? 0 }
     }

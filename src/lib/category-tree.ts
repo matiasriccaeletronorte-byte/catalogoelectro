@@ -144,3 +144,21 @@ export function productPathText(nodes: CategoryNodeData[], product: { categoryId
   if (fromTree.length > 0) return formatPath(fromTree);
   return [product.category, product.subCategory].filter(Boolean).join(" > ");
 }
+
+export type CategoryChild = { id: string; name: string; slug: string; count: number };
+
+/** Subcategorías directas de un nodo (o categorías de primer nivel con `null`) que tienen artículos, con su cantidad. */
+export function childrenWithCounts(nodes: CategoryNodeData[], parentId: string | null, counts: Record<string, number>): CategoryChild[] {
+  return nodes
+    .filter((node) => node.parentId === parentId && (counts[node.id] ?? 0) > 0)
+    .sort((a, b) => compareNames(a.name, b.name))
+    .map((node) => ({ id: node.id, name: node.name, slug: node.slug, count: counts[node.id] }));
+}
+
+/** Dirección nueva para un enlace viejo `?category=X&subCategory=Y`. `null` si la categoría ya no existe. */
+export function legacyCategoryHref(nodes: CategoryNodeData[], category: string, subCategory = ""): string | null {
+  const root = category.trim() ? findByName(nodes, null, category) : null;
+  if (!root) return null;
+  const sub = subCategory.trim() ? findByName(nodes, root.id, subCategory) : null;
+  return categoryHref(nodePath(nodes, (sub ?? root).id));
+}

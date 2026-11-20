@@ -1,8 +1,9 @@
+import { Types } from "mongoose";
 import { normalizeText } from "@/lib/text";
 
 export type SortKey = "relevance" | "price_asc" | "price_desc" | "newest";
 export type CatalogFilters = {
-  q: string; category: string; subCategory: string; brands: string[];
+  q: string; category: string; subCategory: string; categoryId: string; brands: string[];
   minPrice?: number; maxPrice?: number; availableOnly: boolean; outletOnly: boolean; sort: SortKey; page: number;
 };
 
@@ -26,6 +27,7 @@ export function parseFilters(params: URLSearchParams): CatalogFilters {
     q: (params.get("q") ?? "").trim().slice(0, MAX_QUERY_LENGTH),
     category: (params.get("category") ?? "").trim(),
     subCategory: (params.get("subCategory") ?? "").trim(),
+    categoryId: /^[a-f0-9]{24}$/.test(params.get("cat") ?? "") ? (params.get("cat") as string) : "",
     brands: params.getAll("brand").map((b) => b.trim()).filter(Boolean).slice(0, MAX_BRANDS),
     minPrice: positiveNumber(params.get("minPrice")),
     maxPrice: positiveNumber(params.get("maxPrice")),
@@ -41,6 +43,7 @@ export function serializeFilters(f: CatalogFilters): URLSearchParams {
   if (f.q) p.set("q", f.q);
   if (f.category) p.set("category", f.category);
   if (f.subCategory) p.set("subCategory", f.subCategory);
+  if (f.categoryId) p.set("cat", f.categoryId);
   f.brands.forEach((b) => p.append("brand", b));
   if (f.minPrice !== undefined) p.set("minPrice", String(f.minPrice));
   if (f.maxPrice !== undefined) p.set("maxPrice", String(f.maxPrice));
@@ -59,6 +62,7 @@ export function buildMatch(f: CatalogFilters, omit?: "category" | "subCategory" 
   if (f.outletOnly) match.outlet = true;
   if (omit !== "category" && omit !== "subCategory" && f.category) match.category = f.category;
   if (omit !== "category" && omit !== "subCategory" && f.subCategory) match.subCategory = f.subCategory;
+  if (omit !== "category" && omit !== "subCategory" && f.categoryId) match.categoryPath = new Types.ObjectId(f.categoryId);
   if (omit === "subCategory" && f.category) match.category = f.category;
   if (omit !== "brand" && f.brands.length > 0) match.brand = { $in: f.brands };
   if (omit !== "price" && (f.minPrice !== undefined || f.maxPrice !== undefined)) {

@@ -137,3 +137,10 @@ export function buildMenuTree(nodes: CategoryNodeData[], counts: Record<string, 
   };
   return buildTree(nodes).map((tree) => make(tree, 1)).filter((node): node is MenuNode => node !== null);
 }
+
+/** Camino en texto (`A > B > C`) de un artículo: del árbol si está convertido; si no, de sus copias category y subCategory. */
+export function productPathText(nodes: CategoryNodeData[], product: { categoryId?: unknown; category?: string; subCategory?: string }): string {
+  const fromTree = product.categoryId ? nodePath(nodes, String(product.categoryId)) : [];
+  if (fromTree.length > 0) return formatPath(fromTree);
+  return [product.category, product.subCategory].filter(Boolean).join(" > ");
+}

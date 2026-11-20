@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildMenuTree, buildTree, canMove, categoryHref, CategoryNodeData, derivedFields, descendantIds, findByName, formatPath,
-  missingPaths, nodePath, normalizeName, parsePathText, resolveSlugs, slugify, uniqueSlug, validCategoryName
+  missingPaths, nodePath, normalizeName, parsePathText, productPathText, resolveSlugs, slugify, uniqueSlug, validCategoryName
 } from "./category-tree";
 
 const n = (id: string, name: string, parentId: string | null = null, slug = slugify(name)): CategoryNodeData => ({ id, name, slug, parentId });
@@ -158,5 +158,21 @@ describe("buildMenuTree", () => {
   it("respeta la profundidad máxima", () => {
     const menu = buildMenuTree(sample, counts, 2);
     expect(menu[0].children.find((c) => c.name === "Aires acondicionados")!.children).toEqual([]);
+  });
+});
+
+describe("productPathText", () => {
+  it("usa el camino del árbol si el artículo tiene categoryId", () => {
+    expect(productPathText(sample, { categoryId: "3", category: "viejo" })).toBe("Climatización > Aires acondicionados > Split");
+  });
+  it("sin categoryId usa las copias category y subCategory", () => {
+    expect(productPathText(sample, { category: "Hogar", subCategory: "Bazar" })).toBe("Hogar > Bazar");
+    expect(productPathText(sample, { category: "Hogar" })).toBe("Hogar");
+  });
+  it("con un categoryId que ya no existe cae a las copias", () => {
+    expect(productPathText(sample, { categoryId: "999", category: "Hogar" })).toBe("Hogar");
+  });
+  it("acepta ids que no son texto (ObjectId)", () => {
+    expect(productPathText(sample, { categoryId: { toString: () => "3" } })).toBe("Climatización > Aires acondicionados > Split");
   });
 });

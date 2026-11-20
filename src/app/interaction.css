@@ -348,3 +348,5 @@ header.header-dark .branch-chip{background:transparent;color:#fff;border-color:r
 .cart-branch button{background:none;color:var(--brand);text-decoration:underline;font-weight:800;padding:4px}
 button.whatsapp-fab{border:0;cursor:pointer}
 .branch-picker:focus{outline:none}
+
+.product-breadcrumb .crumb{display:inline-flex;align-items:center;gap:10px;min-width:0}

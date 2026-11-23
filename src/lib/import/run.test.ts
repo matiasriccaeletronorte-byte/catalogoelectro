@@ -62,4 +62,19 @@ describe("runImport (MongoDB)", () => {
     expect([applied.created, applied.errors.length]).toEqual([preview.created, preview.errors.length]);
     expect(applied.errors[0].rowNumber).toBe(3);
   });
+  it("sin actualizar existentes: precios, descripción y fotos de los que ya están no cambian; los nuevos sí se crean", async (ctx) => {
+    if (!available) return ctx.skip();
+    await runImport([row(2, { sku: "A1", description: "Mi descripción", ...full })], "apply");
+    await ProductModel.updateOne({ sku: "A1" }, { $set: { images: ["https://x/foto.jpg"], cashPrice: 777 } });
+    const result = await runImport([row(2, { sku: "A1", description: "De Contabilium", name: "Otro", category: "Heladeras", cashPrice: 1, listPrice: 2 }), row(3, { sku: "B2", ...full })], "apply", []);
+    expect(result).toMatchObject({ created: 1, updated: 0 });
+    expect(await ProductModel.findOne({ sku: "A1" }).lean()).toMatchObject({ name: "Heladera", description: "Mi descripción", cashPrice: 777, images: ["https://x/foto.jpg"] });
+    expect(await ProductModel.countDocuments()).toBe(2);
+  });
+  it("solo categorías: cambia la categoría y deja precios y descripción", async (ctx) => {
+    if (!available) return ctx.skip();
+    await runImport([row(2, { sku: "A1", description: "Mi descripción", ...full })], "apply");
+    await runImport([row(2, { sku: "A1", description: "De Contabilium", category: "Hogar > Bazar", cashPrice: 1, listPrice: 2 })], "apply", ["category"]);
+    expect(await ProductModel.findOne({ sku: "A1" }).lean()).toMatchObject({ category: "Hogar", subCategory: "Bazar", description: "Mi descripción", cashPrice: 100, listPrice: 120 });
+  });
 });

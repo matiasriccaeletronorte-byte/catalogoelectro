@@ -227,3 +227,7 @@
 .bank-promos-add,.bank-promos-save{justify-self:start}
 .bank-promos ul{margin:0;padding-left:18px}.bank-promos li button{padding:2px 8px;margin-left:6px}
 .bank-promos small{color:#e3062f}
+.import-update{display:grid;gap:6px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.import-update legend{font-weight:800;padding:0 6px}
+.import-update label{display:flex;align-items:center;gap:8px;font-size:14px}
+.import-update input{width:auto;padding:0}

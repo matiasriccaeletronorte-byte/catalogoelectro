@@ -4,11 +4,14 @@ import { useEffect, useState } from "react";
 
 type Result = { mode: "preview" | "apply"; created: number; updated: number; errors: { rowNumber: number; message: string }[]; columns: string[]; newCategories?: string[] };
 
+const GROUPS = [["name", "Nombre"], ["description", "Descripción"], ["category", "Categoría"], ["brand", "Marca"], ["prices", "Precios"], ["other", "Características, outlet y disponibilidad"]] as const;
+
 export function ImportTab() {
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [groups, setGroups] = useState<string[]>([]);
   const [total, setTotal] = useState<number | null>(null);
   const [word, setWord] = useState("");
   const [purgeMessage, setPurgeMessage] = useState("");
@@ -31,7 +34,7 @@ export function ImportTab() {
     if (!file) return;
     setBusy(true); setError("");
     const form = new FormData();
-    form.set("file", file); form.set("mode", mode);
+    form.set("file", file); form.set("mode", mode); form.set("update", groups.join(","));
     const response = await fetch("/api/admin/import", { method: "POST", body: form });
     const body = await response.json().catch(() => ({}));
     setBusy(false);
@@ -45,9 +48,16 @@ export function ImportTab() {
     <h1>Importar y exportar</h1>
     <small>
       Subí un Excel (.xlsx) o CSV. La primera fila son los encabezados: SKU, Nombre, Descripción, Categoría (con subniveles así: Climatización &gt; Aires acondicionados &gt; Split), Marca, Precio efectivo, Precio contado, Disponible, Características (separadas por |), Outlet, Activo.
-      Si el SKU ya existe se actualiza (solo las celdas con valor); si no, se crea. Las imágenes se cargan desde cada artículo.
+      Las imágenes se cargan desde cada artículo y la importación nunca las toca.
     </small>
     <input type="file" accept=".xlsx,.csv" onChange={(e) => { setFile(e.target.files?.[0] ?? null); setResult(null); }} />
+    <fieldset className="import-update">
+      <legend>En los artículos que ya existen, actualizar:</legend>
+      {GROUPS.map(([id, label]) => <label key={id}>
+        <input type="checkbox" checked={groups.includes(id)} onChange={(e) => { setGroups(e.target.checked ? [...groups, id] : groups.filter((g) => g !== id)); setResult(null); }} /> {label}
+      </label>)}
+      <small>{groups.length === 0 ? "No se modifica ningún artículo existente: solo se crean los nuevos." : "Lo que no marques queda como está."}</small>
+    </fieldset>
     <button type="button" disabled={!file || busy} onClick={() => send("preview")}>Ver vista previa</button>
     <a className="primary-link" href="/api/admin/export?format=xlsx">Descargar catálogo actual (Excel)</a>
     <a className="primary-link" href="/api/admin/export?format=csv">Descargar catálogo actual (CSV)</a>

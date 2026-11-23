@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { isAdmin, unauthorized } from "@/lib/admin-auth";
 import {
-  CategoryError, convertLegacy, countsByNode, createNode, deleteNode, deleteProductsInBranch, legacyProductCount, loadNodes, moveNode, moveProducts, renameNode
+  CategoryError, convertLegacy, countsByNode, createNode, deleteNode, deleteProductsInBranch, legacyProductCount, reorderNode, loadNodes, moveNode, moveProducts, renameNode
 } from "@/lib/category-store";
 import { connectDb } from "@/lib/db";
 
@@ -12,6 +12,7 @@ const action = z.discriminatedUnion("action", [
   z.object({ action: z.literal("create"), parentId: id.nullable(), name: z.string() }),
   z.object({ action: z.literal("rename"), id, name: z.string() }),
   z.object({ action: z.literal("move"), id, newParentId: id.nullable() }),
+  z.object({ action: z.literal("reorder"), id, beforeId: id.nullable() }),
   z.object({ action: z.literal("move-products"), fromId: id, toId: id }),
   z.object({ action: z.literal("convert") }),
   z.object({ action: z.literal("delete-products"), id, confirm: z.literal("BORRAR") })
@@ -42,6 +43,7 @@ export async function POST(request: Request) {
     if (body.action === "create") result = await createNode(body.parentId, body.name);
     else if (body.action === "rename") await renameNode(body.id, body.name);
     else if (body.action === "move") await moveNode(body.id, body.newParentId);
+    else if (body.action === "reorder") await reorderNode(body.id, body.beforeId);
     else if (body.action === "move-products") result = { moved: await moveProducts(body.fromId, body.toId) };
     else if (body.action === "delete-products") result = { deleted: await deleteProductsInBranch(body.id) };
     else result = await convertLegacy();

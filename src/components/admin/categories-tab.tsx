@@ -13,6 +13,8 @@ export function CategoriesTab({ onChange }: { onChange: () => void }) {
   const [open, setOpen] = useState<Set<string>>(new Set());
   const [pending, setPending] = useState<Pending>(null);
   const [adding, setAdding] = useState<string | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [over, setOver] = useState<{ id: string; after: boolean } | null>(null);
   const [images, setImages] = useState<{ name: string; image: string }[]>([]);
 
   useEffect(() => {
@@ -95,11 +97,48 @@ export function CategoriesTab({ onChange }: { onChange: () => void }) {
     return data.nodes.filter((n) => !banned.has(n.id)).map((n) => ({ id: n.id, label: formatPath(nodePath(data.nodes, n.id)) })).sort((a, b) => a.label.localeCompare(b.label, "es"));
   };
 
-  const row = (node: TreeNode, depth: number): React.ReactNode => {
+  // arrastrar para ordenar: solo entre hermanos (mismo grupo); suelta antes o después de la fila según la mitad en la que caiga
+  async function drop(target: TreeNode, siblings: TreeNode[], after: boolean) {
+    const id = dragId;
+    setDragId(null); setOver(null);
+    if (!id || id === target.id) return;
+    const index = siblings.findIndex((item) => item.id === target.id);
+    const next = after ? siblings.slice(index + 1).find((item) => item.id !== id) : target;
+    await send("POST", { action: "reorder", id, beforeId: next ? next.id : null }, "No se pudo cambiar el orden.");
+  }
+
+  const row = (node: TreeNode, depth: number, siblings: TreeNode[]): React.ReactNode => {
+    const canDrop = !!dragId && dragId !== node.id && siblings.some((item) => item.id === dragId);
     const count = data.counts[node.id] ?? 0;
     const isOpen = open.has(node.id);
     return <div key={node.id} className="tree-item">
-      <div className="tree-row" style={{ paddingLeft: depth * 22 }}>
+      <div
+        className={`tree-row${dragId === node.id ? " dragging" : ""}${over?.id === node.id ? (over.after ? " drop-after" : " drop-before") : ""}`}
+        style={{ paddingLeft: depth * 22 }}
+        onDragOver={(event) => {
+          if (!canDrop) return;
+          event.preventDefault();
+          const box = event.currentTarget.getBoundingClientRect();
+          const after = event.clientY > box.top + box.height / 2;
+          if (over?.id !== node.id || over.after !== after) setOver({ id: node.id, after });
+        }}
+        onDrop={(event) => { if (!canDrop) return; event.preventDefault(); void drop(node, siblings, over?.id === node.id ? over.after : false); }}
+      >
+        <span
+          className="tree-grip"
+          draggable
+          role="img"
+          aria-label={`Arrastrar para ordenar ${node.name}`}
+          title="Arrastrá para ordenar"
+          onDragStart={(event) => {
+            setDragId(node.id);
+            event.dataTransfer.effectAllowed = "move";
+            event.dataTransfer.setData("text/plain", node.id);
+            const rowEl = event.currentTarget.closest(".tree-row");
+            if (rowEl) event.dataTransfer.setDragImage(rowEl, 20, 20);
+          }}
+          onDragEnd={() => { setDragId(null); setOver(null); }}
+        >⠿</span>
         <button type="button" className="tree-toggle" onClick={() => toggle(node.id)} aria-expanded={isOpen} aria-label={isOpen ? "Cerrar" : "Abrir"} disabled={node.children.length === 0}>{node.children.length === 0 ? "·" : isOpen ? "▾" : "▸"}</button>
         {depth === 0 ? (() => {
           const current = images.find((item) => item.name === node.name);
@@ -136,7 +175,7 @@ export function CategoriesTab({ onChange }: { onChange: () => void }) {
         <input name="name" placeholder={`Subcategoría de ${node.name}`} maxLength={60} autoFocus />
         <button>Agregar</button>
       </form> : null}
-      {isOpen ? node.children.map((child) => row(child, depth + 1)) : null}
+      {isOpen ? node.children.map((child) => row(child, depth + 1, node.children)) : null}
     </div>;
   };
 
@@ -152,6 +191,6 @@ export function CategoriesTab({ onChange }: { onChange: () => void }) {
       <button>Agregar</button>
     </form>
     {message ? <small role="alert" className="tree-message">{message}</small> : null}
-    <div className="category-tree-view">{buildTree(data.nodes).map((node) => row(node, 0))}</div>
+    <div className="category-tree-view">{(() => { const roots = buildTree(data.nodes); return roots.map((node) => row(node, 0, roots)); })()}</div>
   </>;
 }

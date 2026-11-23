@@ -3,12 +3,12 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { CategoryModel } from "@/models/Category";
 import { CategoryNodeModel } from "@/models/CategoryNode";
 import { CategoryRedirectModel } from "@/models/CategoryRedirect";
-import { hasCycle } from "./category-tree";
+import { compareNodes, hasCycle } from "./category-tree";
 import { Types } from "mongoose";
 import { ProductModel } from "@/models/Product";
 import {
   categoryFieldsFor, CategoryError, convertLegacy, countsByNode, createNode, deleteNode, ensurePath, legacyProductCount,
-  deleteProductsInBranch, findRedirect, loadNodes, moveNode, moveProducts, productUpdateOps, renameNode
+  reorderNode, deleteProductsInBranch, findRedirect, loadNodes, moveNode, moveProducts, productUpdateOps, renameNode
 } from "./category-store";
 
 // Prueba de integración: usa una base de pruebas en MongoDB local. Si no hay Mongo, se omite.
@@ -306,5 +306,43 @@ describe("deleteProductsInBranch", () => {
     const vacia = await createNode(null, "Vacía");
     expect(await deleteProductsInBranch(vacia.id)).toBe(0);
     await expect(deleteProductsInBranch("c".repeat(24))).rejects.toMatchObject({ code: "not_found" });
+  });
+});
+
+describe("reorderNode", () => {
+  const order = async (parentId: string | null) => (await loadNodes()).filter((x) => x.parentId === parentId).sort(compareNodes).map((x) => x.name);
+  it("guarda el orden manual de los hermanos y no toca a los demás grupos", async (ctx) => {
+    if (!available) return ctx.skip();
+    const a = await createNode(null, "Alfa"); const b = await createNode(null, "Beta"); const c = await createNode(null, "Gamma");
+    const hijo = await createNode(a.id, "Hijo");
+    await reorderNode(c.id, a.id);
+    expect(await order(null)).toEqual(["Gamma", "Alfa", "Beta"]);
+    await reorderNode(a.id, null);
+    expect(await order(null)).toEqual(["Gamma", "Beta", "Alfa"]);
+    expect(await order(a.id)).toEqual(["Hijo"]);
+    expect(hijo.id).toBeTruthy();
+    expect(b.id).toBeTruthy();
+  });
+  it("una categoría nueva queda al final del grupo ya ordenado", async (ctx) => {
+    if (!available) return ctx.skip();
+    const a = await createNode(null, "Alfa"); const z = await createNode(null, "Zeta");
+    await reorderNode(z.id, a.id);
+    await createNode(null, "Beta");
+    expect(await order(null)).toEqual(["Zeta", "Alfa", "Beta"]);
+  });
+  it("al mover una categoría a otro grupo queda al final de ese grupo", async (ctx) => {
+    if (!available) return ctx.skip();
+    const a = await createNode(null, "Alfa"); const b = await createNode(null, "Beta");
+    const x = await createNode(a.id, "Xx"); const y = await createNode(a.id, "Yy");
+    await reorderNode(y.id, x.id);
+    await createNode(b.id, "Qq");
+    await moveNode(y.id, b.id);
+    expect(await order(b.id)).toEqual(["Qq", "Yy"]);
+  });
+  it("rechaza ids inexistentes o de otro grupo", async (ctx) => {
+    if (!available) return ctx.skip();
+    const a = await createNode(null, "Alfa"); const h = await createNode(a.id, "Hijo");
+    await expect(reorderNode(h.id, a.id)).rejects.toMatchObject({ code: "invalid" });
+    await expect(reorderNode("c".repeat(24), null)).rejects.toMatchObject({ code: "not_found" });
   });
 });

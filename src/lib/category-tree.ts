@@ -1,4 +1,4 @@
-export type CategoryNodeData = { id: string; name: string; slug: string; parentId: string | null };
+export type CategoryNodeData = { id: string; name: string; slug: string; parentId: string | null; order?: number };
 export type TreeNode = CategoryNodeData & { children: TreeNode[] };
 export type MenuNode = { id: string; name: string; href: string; count: number; children: MenuNode[] };
 
@@ -34,6 +34,35 @@ export function compareNames(a: string, b: string): number {
   return collator.compare(a, b);
 }
 
+/** Orden de las categorías hermanas: primero las que tienen orden manual (por su posición) y después las demás, de la A a la Z ("Otros" al final). */
+export function compareNodes(a: CategoryNodeData, b: CategoryNodeData): number {
+  const hasA = typeof a.order === "number", hasB = typeof b.order === "number";
+  if (hasA && hasB) return (a.order as number) - (b.order as number);
+  if (hasA !== hasB) return hasA ? -1 : 1;
+  return compareNames(a.name, b.name);
+}
+
+/** Ids de los hermanos de `id` (en su orden actual) después de ponerlo antes de `beforeId`, o al final si es `null`. `null` si alguno no existe o no son hermanos. */
+export function moveBefore(nodes: CategoryNodeData[], id: string, beforeId: string | null): string[] | null {
+  const node = nodes.find((item) => item.id === id);
+  if (!node) return null;
+  const siblings = nodes.filter((item) => item.parentId === node.parentId).sort(compareNodes).map((item) => item.id);
+  if (beforeId !== null && !siblings.includes(beforeId)) return null;
+  const rest = siblings.filter((item) => item !== id);
+  const at = beforeId === null ? rest.length : rest.indexOf(beforeId);
+  if (at === -1) return siblings; // soltarlo sobre sí mismo
+  rest.splice(at, 0, id);
+  return rest;
+}
+
+/** Ordena elementos que llevan el nombre de un grupo principal (por ejemplo, la franja de la portada) según el orden del árbol. Los que no están en el árbol van al final, con el orden que traían. */
+export function orderByRoots<T extends { name: string }>(items: T[], nodes: CategoryNodeData[]): T[] {
+  const roots = nodes.filter((node) => node.parentId === null).sort(compareNodes);
+  const position = new Map(roots.map((node, index) => [normalizeName(node.name), index]));
+  const at = (item: T) => position.get(normalizeName(item.name)) ?? Number.MAX_SAFE_INTEGER;
+  return items.map((item, index) => ({ item, index })).sort((a, b) => at(a.item) - at(b.item) || a.index - b.index).map(({ item }) => item);
+}
+
 export function buildTree(nodes: CategoryNodeData[]): TreeNode[] {
   const byParent = new Map<string | null, CategoryNodeData[]>();
   for (const node of nodes) {
@@ -43,7 +72,7 @@ export function buildTree(nodes: CategoryNodeData[]): TreeNode[] {
   }
   const build = (parentId: string | null, depth: number): TreeNode[] => depth > 50 ? [] : (byParent.get(parentId) ?? [])
     .slice()
-    .sort((a, b) => compareNames(a.name, b.name))
+    .sort(compareNodes)
     .map((node) => ({ ...node, children: build(node.id, depth + 1) }));
   return build(null, 0);
 }
@@ -169,7 +198,7 @@ export type CategoryChild = { id: string; name: string; slug: string; count: num
 export function childrenWithCounts(nodes: CategoryNodeData[], parentId: string | null, counts: Record<string, number>): CategoryChild[] {
   return nodes
     .filter((node) => node.parentId === parentId && (counts[node.id] ?? 0) > 0)
-    .sort((a, b) => compareNames(a.name, b.name))
+    .sort(compareNodes)
     .map((node) => ({ id: node.id, name: node.name, slug: node.slug, count: counts[node.id] }));
 }
 

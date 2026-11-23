@@ -7,6 +7,7 @@ import { siteUrl } from "@/lib/site-url";
 import { connectDb } from "@/lib/db";
 import { getProductsByIds } from "@/lib/catalog-query";
 import { getHomepageSettings } from "@/lib/homepage-settings";
+import { orderByRoots } from "@/lib/category-tree";
 import { buildCategoryTiles } from "@/lib/home-categories";
 import { buildHomeShelves } from "@/lib/home-shelves";
 import { normalizeImageUrl } from "@/lib/image-url";
@@ -20,12 +21,13 @@ export const dynamic = "force-dynamic";
 export default async function Page() {
   await connectDb();
   const settings = await getSiteSettings();
-  const [shelves, categoryTiles, homepage] = await Promise.all([buildHomeShelves(), buildCategoryTiles(settings.categoryImages), getHomepageSettings()]);
+  const [shelves, tiles, homepage, treeNodes] = await Promise.all([buildHomeShelves(), buildCategoryTiles(settings.categoryImages), getHomepageSettings(), loadNodes()]);
+  const categoryTiles = orderByRoots(tiles, treeNodes);
   const tree = await getMenuTree();
   const menu = tree.length > 0 ? tree : categoryTiles.map((tile) => ({ id: tile.name, name: tile.name, href: `/catalogo?category=${encodeURIComponent(tile.name)}`, count: tile.total, children: [] }));
   const featuredIds = [...new Set([...homepage.bestSellerIds, ...homepage.offerIds])];
   const featured = await getProductsByIds(featuredIds);
-  const nodes = await loadNodes();
+  const nodes = treeNodes;
   const names = [...categoryTiles.map((tile) => tile.name), ...shelves.categories.map((shelf) => shelf.name)];
   const categoryHrefs: Record<string, string> = {};
   for (const name of names) {

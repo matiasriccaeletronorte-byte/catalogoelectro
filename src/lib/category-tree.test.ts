@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildMenuTree, buildTree, canMove, categoryHref, childrenWithCounts, findUniqueByName, findUniqueBySlug, hasCycle, legacyCategoryHref, CategoryNodeData, derivedFields, descendantIds, findByName, formatPath,
-  missingPaths, nodePath, normalizeName, parsePathText, productPathText, resolveSlugs, slugify, uniqueSlug, validCategoryName
+  compareNodes, moveBefore, orderByRoots, missingPaths, nodePath, normalizeName, parsePathText, productPathText, resolveSlugs, slugify, uniqueSlug, validCategoryName
 } from "./category-tree";
 
 const n = (id: string, name: string, parentId: string | null = null, slug = slugify(name)): CategoryNodeData => ({ id, name, slug, parentId });
@@ -234,5 +234,66 @@ describe("enlaces viejos hacia categorías que pasaron a un nivel más profundo"
     expect(findUniqueBySlug(sample, "split")?.id).toBe("3");
     expect(findUniqueBySlug(sample, "no-existe")).toBeNull();
     expect(findUniqueBySlug([...sample, n("9", "Split", "1")], "split")).toBeNull();
+  });
+});
+
+describe("orden manual de las categorías", () => {
+  const o = (id: string, name: string, order?: number, parentId: string | null = null): CategoryNodeData => ({ ...n(id, name, parentId), ...(order === undefined ? {} : { order }) });
+  const names = (nodes: { name: string }[]) => nodes.map((x) => x.name);
+
+  it("sin orden manual sigue siendo A–Z con Otros al final", () => {
+    expect(names(buildTree([o("1", "Zeta"), o("2", "Otros"), o("3", "Alfa")]))).toEqual(["Alfa", "Zeta", "Otros"]);
+  });
+  it("con orden manual se respeta, aunque el nombre diga otra cosa", () => {
+    expect(names(buildTree([o("1", "Alfa", 2), o("2", "Zeta", 0), o("3", "Otros", 1)]))).toEqual(["Zeta", "Otros", "Alfa"]);
+  });
+  it("las categorías sin orden (nuevas) van después de las ordenadas, entre sí A–Z", () => {
+    expect(names(buildTree([o("1", "Nueva B"), o("2", "Primera", 0), o("3", "Nueva A"), o("4", "Segunda", 1)]))).toEqual(["Primera", "Segunda", "Nueva A", "Nueva B"]);
+  });
+  it("el orden de cada grupo es independiente", () => {
+    const tree = buildTree([o("1", "Hogar", 1), o("2", "Bazar", 0, "1"), o("3", "Cocina", 1, "1"), o("4", "Clima", 0)]);
+    expect(names(tree)).toEqual(["Clima", "Hogar"]);
+    expect(names(tree[1].children)).toEqual(["Bazar", "Cocina"]);
+  });
+  it("compareNodes, el menú y los conteos usan el mismo orden", () => {
+    const nodes = [o("1", "Alfa", 1), o("2", "Zeta", 0)];
+    expect([...nodes].sort(compareNodes).map((x) => x.name)).toEqual(["Zeta", "Alfa"]);
+    expect(names(childrenWithCounts(nodes, null, { "1": 1, "2": 1 }))).toEqual(["Zeta", "Alfa"]);
+    expect(buildMenuTree(nodes, { "1": 1, "2": 1 }).map((x) => x.name)).toEqual(["Zeta", "Alfa"]);
+  });
+
+  describe("moveBefore", () => {
+    const nodes = [o("1", "A", 0), o("2", "B", 1), o("3", "C", 2), o("4", "D", 3), o("9", "Hijo", undefined, "1")];
+    it("pone el nodo antes de otro hermano", () => {
+      expect(moveBefore(nodes, "4", "2")).toEqual(["1", "4", "2", "3"]);
+      expect(moveBefore(nodes, "1", "3")).toEqual(["2", "1", "3", "4"]);
+    });
+    it("sin destino lo manda al final", () => {
+      expect(moveBefore(nodes, "1", null)).toEqual(["2", "3", "4", "1"]);
+    });
+    it("soltarlo donde ya estaba no cambia nada", () => {
+      expect(moveBefore(nodes, "2", "3")).toEqual(["1", "2", "3", "4"]);
+      expect(moveBefore(nodes, "2", "2")).toEqual(["1", "2", "3", "4"]);
+    });
+    it("rechaza nodos que no existen o que no son hermanos", () => {
+      expect(moveBefore(nodes, "x", "2")).toBeNull();
+      expect(moveBefore(nodes, "4", "9")).toBeNull();
+    });
+  });
+});
+
+describe("orderByRoots (franja de categorías de la portada)", () => {
+  const root = (id: string, name: string, order?: number): CategoryNodeData => ({ ...n(id, name), ...(order === undefined ? {} : { order }) });
+  const tiles = [{ name: "Hogar", total: 50 }, { name: "Línea blanca", total: 400 }, { name: "Climatización", total: 300 }, { name: "Suelta", total: 5 }];
+  it("sigue el orden de los grupos principales del árbol", () => {
+    const nodes = [root("1", "Línea blanca", 2), root("2", "Hogar", 0), root("3", "Climatización", 1)];
+    expect(orderByRoots(tiles, nodes).map((t) => t.name)).toEqual(["Hogar", "Climatización", "Línea blanca", "Suelta"]);
+  });
+  it("sin orden manual queda de la A a la Z, y lo que no está en el árbol va al final por cantidad", () => {
+    const nodes = [root("1", "Línea blanca"), root("2", "Hogar"), root("3", "Climatización")];
+    expect(orderByRoots(tiles, nodes).map((t) => t.name)).toEqual(["Climatización", "Hogar", "Línea blanca", "Suelta"]);
+  });
+  it("sin árbol deja el orden que traía", () => {
+    expect(orderByRoots(tiles, []).map((t) => t.name)).toEqual(tiles.map((t) => t.name));
   });
 });

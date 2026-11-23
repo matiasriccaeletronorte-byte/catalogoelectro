@@ -4,7 +4,9 @@ const categoryNodeSchema = new Schema({
   name: { type: String, required: true, trim: true },
   slug: { type: String, required: true },
   nameKey: { type: String, required: true },
-  parentId: { type: Schema.Types.ObjectId, default: null }
+  parentId: { type: Schema.Types.ObjectId, default: null },
+  // posición manual entre hermanos; sin valor = al final, de la A a la Z
+  order: { type: Number }
 }, { timestamps: true });
 
 // no puede haber dos hermanos con la misma dirección ni con el mismo nombre (sin tildes ni mayúsculas)

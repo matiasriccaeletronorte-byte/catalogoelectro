@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
 import {
-  canMove, categoryHref, CategoryNodeData, derivedFields, descendantIds, findByName, hasCycle, nodePath, normalizeName, slugify, uniqueSlug, validCategoryName
+  canMove, categoryHref, moveBefore, CategoryNodeData, derivedFields, descendantIds, findByName, hasCycle, nodePath, normalizeName, slugify, uniqueSlug, validCategoryName
 } from "@/lib/category-tree";
 import { searchTextOf } from "@/lib/product-schema";
 import { CategoryModel } from "@/models/Category";
@@ -14,8 +14,8 @@ export class CategoryError extends Error {
   }
 }
 
-type Row = { _id: Types.ObjectId; name: string; slug: string; parentId: Types.ObjectId | null };
-const toData = (row: Row): CategoryNodeData => ({ id: String(row._id), name: row.name, slug: row.slug, parentId: row.parentId ? String(row.parentId) : null });
+type Row = { _id: Types.ObjectId; name: string; slug: string; parentId: Types.ObjectId | null; order?: number };
+const toData = (row: Row): CategoryNodeData => ({ id: String(row._id), name: row.name, slug: row.slug, parentId: row.parentId ? String(row.parentId) : null, ...(typeof row.order === "number" ? { order: row.order } : {}) });
 const cleanName = (name: string) => name.replace(/\s+/g, " ").trim();
 
 export async function loadNodes(): Promise<CategoryNodeData[]> {
@@ -103,6 +103,16 @@ export async function renameNode(id: string, rawName: string): Promise<void> {
   await recordRedirects(before);
 }
 
+/** Guarda el orden manual de un grupo de hermanos: `id` queda antes de `beforeId` (o al final si es `null`). */
+export async function reorderNode(id: string, beforeId: string | null): Promise<void> {
+  const nodes = await loadNodes();
+  if (!nodes.some((item) => item.id === id)) throw new CategoryError("not_found", "La categoría no existe.");
+  if (beforeId !== null && !nodes.some((item) => item.id === beforeId)) throw new CategoryError("not_found", "La categoría no existe.");
+  const ids = moveBefore(nodes, id, beforeId);
+  if (!ids) throw new CategoryError("invalid", "Solo se pueden ordenar categorías del mismo grupo.");
+  await CategoryNodeModel.bulkWrite(ids.map((nodeId, index) => ({ updateOne: { filter: { _id: nodeId }, update: { $set: { order: index } } } })));
+}
+
 export async function moveNode(id: string, newParentId: string | null): Promise<void> {
   const nodes = await loadNodes();
   const node = nodes.find((item) => item.id === id);
@@ -112,7 +122,8 @@ export async function moveNode(id: string, newParentId: string | null): Promise<
   if (clash && clash.id !== id) throw new CategoryError("duplicate", "El destino ya tiene una categoría con ese nombre.");
   const slug = uniqueSlug(node.slug, nodes.filter((item) => item.parentId === newParentId && item.id !== id).map((item) => item.slug));
   const before = branchPaths(nodes, id);
-  await CategoryNodeModel.updateOne({ _id: id }, { $set: { parentId: newParentId ? new Types.ObjectId(newParentId) : null, slug } });
+  // al cambiar de grupo se va al final del nuevo (sin posición manual)
+  await CategoryNodeModel.updateOne({ _id: id }, { $set: { parentId: newParentId ? new Types.ObjectId(newParentId) : null, slug }, ...(newParentId !== node.parentId ? { $unset: { order: 1 } } : {}) });
   // si dos personas movieron categorías a la vez y quedó un ciclo, se deshace este movimiento
   if (hasCycle(await loadNodes(), id)) {
     await CategoryNodeModel.updateOne({ _id: id }, { $set: { parentId: node.parentId ? new Types.ObjectId(node.parentId) : null, slug: node.slug } });
